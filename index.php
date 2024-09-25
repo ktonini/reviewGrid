@@ -2,13 +2,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-session_start();
-
 // Configuration
 $scriptDir = dirname($_SERVER['SCRIPT_FILENAME']) . '/';
 $dataDir = $scriptDir . '_data/';
 $thumbsDir = $dataDir . 'thumbs/';
-$dbFile = $dataDir . 'starred_images.txt';
 $columns = 4;
 $thumbWidth = 250;
 $thumbHeight = 250;
@@ -30,28 +27,44 @@ if (!file_exists($thumbsDir)) {
     mkdir($thumbsDir, 0755, true);
 }
 
-// Generate a unique user ID if not set
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['user_id'] = uniqid();
+// Replace the session_start() and user_id generation with:
+$user_ip = $_SERVER['REMOTE_ADDR'];
+$usersFile = $dataDir . 'data.json';
+
+// Load or initialize users data
+$data = file_exists($usersFile) ? json_decode(file_get_contents($usersFile), true) : [];
+
+if (!isset($data[$user_ip])) {
+    $data[$user_ip] = [
+        'name' => $user_ip,
+        'starred_images' => []
+    ];
+    file_put_contents($usersFile, json_encode($data));
+}
+
+// Handle name update
+if (isset($_POST['update_name'])) {
+    $new_name = trim($_POST['update_name']);
+    if (!empty($new_name)) {
+        $data[$user_ip]['name'] = $new_name;
+        file_put_contents($usersFile, json_encode($data));
+    }
+    exit;
 }
 
 // Handle starring/unstarring
 if (isset($_POST['toggle_star'])) {
     $image = $_POST['toggle_star'];
-    $db = file_exists($dbFile) ? json_decode(file_get_contents($dbFile), true) : [];
     
-    if (!isset($db[$image])) {
-        $db[$image] = [];
-    }
-    
-    $index = array_search($_SESSION['user_id'], $db[$image]);
+    $index = array_search($image, $data[$user_ip]['starred_images']);
     if ($index === false) {
-        $db[$image][] = $_SESSION['user_id'];
+        $data[$user_ip]['starred_images'][] = $image;
     } else {
-        unset($db[$image][$index]);
+        unset($data[$user_ip]['starred_images'][$index]);
+        $data[$user_ip]['starred_images'] = array_values($data[$user_ip]['starred_images']);
     }
     
-    file_put_contents($dbFile, json_encode($db));
+    file_put_contents($usersFile, json_encode($data));
     exit;
 }
 
@@ -73,8 +86,8 @@ foreach ($images as $image) {
     }
 }
 
-// Load starred images
-$starredImages = file_exists($dbFile) ? json_decode(file_get_contents($dbFile), true) : [];
+// Replace the starred images loading with:
+$starredImages = $data[$user_ip]['starred_images'];
 
 // Function to create thumbnail
 function createThumbnail($source, $destination, $width, $height) {
@@ -409,6 +422,31 @@ function generateTitle($filename) {
             from {bottom: 30px; opacity: 1;}
             to {bottom: 0; opacity: 0;}
         }
+        #nameModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+        #nameModal .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 80%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #nameInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -420,7 +458,7 @@ function generateTitle($filename) {
     } else {
         foreach ($images as $image): 
             $filename = basename($image);
-            $isStarred = isset($starredImages[$filename]) && in_array($_SESSION['user_id'], $starredImages[$filename]);
+            $isStarred = in_array($filename, $starredImages);
             $thumbPath = ($subDir ? '/' . $subDir : '') . '/_data/thumbs/' . $filename;
             $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $filename;
             $title = generateTitle($filename);
@@ -463,6 +501,15 @@ function generateTitle($filename) {
     </div>
 
     <div id="toast">Image filenames copied to clipboard!</div>
+
+    <div id="nameModal" class="modal">
+        <div class="modal-content" style="background-color: var(--card-bg); padding: 20px; border-radius: 8px;">
+            <h2>Edit Your Name</h2>
+            <input type="text" id="nameInput" value="<?php echo htmlspecialchars($data[$user_ip]['name']); ?>" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+            <button id="saveName" class="footer-button">Save</button>
+            <button id="cancelName" class="footer-button" style="background-color: #ff4444;">Cancel</button>
+        </div>
+    </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -651,6 +698,56 @@ function generateTitle($filename) {
 
         // Initial update of starred footer
         updateStarredFooter();
+
+        // Add this to your existing JavaScript
+        const nameModal = document.getElementById('nameModal');
+        const nameInput = document.getElementById('nameInput');
+        const saveName = document.getElementById('saveName');
+        const cancelName = document.getElementById('cancelName');
+
+        // Add a button to open the name modal
+        const editNameButton = document.createElement('button');
+        editNameButton.textContent = 'Edit Name';
+        editNameButton.className = 'footer-button';
+        editNameButton.style.marginRight = '10px';
+        copyButton.parentNode.insertBefore(editNameButton, copyButton);
+
+        editNameButton.addEventListener('click', function() {
+            nameModal.style.display = 'block';
+        });
+
+        saveName.addEventListener('click', async function() {
+            const newName = nameInput.value.trim();
+            if (newName) {
+                try {
+                    const response = await fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `update_name=${encodeURIComponent(newName)}`
+                    });
+                    if (response.ok) {
+                        showToast('Name updated successfully!');
+                        nameModal.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error updating name:', error);
+                    showToast('Failed to update name.');
+                }
+            }
+        });
+
+        cancelName.addEventListener('click', function() {
+            nameModal.style.display = 'none';
+        });
+
+        // Close the name modal when clicking outside of it
+        window.addEventListener('click', function(e) {
+            if (e.target == nameModal) {
+                nameModal.style.display = 'none';
+            }
+        });
     });
     </script>
 </body>
