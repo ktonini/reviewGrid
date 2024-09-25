@@ -1,6 +1,6 @@
-# ReviewGrid
+# reviewGrid
 
-ReviewGrid is a simple, PHP-based image gallery with review features. It allows users to view, star, and download images in a responsive grid layout.
+reviewGrid is a simple, PHP-based image gallery with review features. It allows users to view, star, and download images in a responsive grid layout.
 
 ## Features
 
