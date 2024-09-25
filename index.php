@@ -355,7 +355,8 @@ foreach ($data as $ip => $userData) {
             overflow-x: auto;
             margin: 0 10px;
             border-radius: 4px;
-            height: 80px;
+            overflow-y: hidden;
+            margin-top: 10px;
         }
         .starred-list {
             display: inline-flex;
@@ -366,7 +367,6 @@ foreach ($data as $ip => $userData) {
             width: 80px;
             height: 80px;
             cursor: pointer;
-            margin: 2px;
         }
         .starred-thumbnail img {
             width: 100%;
