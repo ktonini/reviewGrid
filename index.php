@@ -42,12 +42,15 @@ if (!isset($data[$user_ip])) {
     file_put_contents($usersFile, json_encode($data));
 }
 
-// Handle name update
+// Add this near the top of the file, after other POST handlers
 if (isset($_POST['update_name'])) {
     $new_name = trim($_POST['update_name']);
     if (!empty($new_name)) {
         $data[$user_ip]['name'] = $new_name;
         file_put_contents($usersFile, json_encode($data));
+        echo json_encode(['success' => true, 'name' => $new_name]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Name cannot be empty']);
     }
     exit;
 }
@@ -131,6 +134,14 @@ function generateTitle($filename) {
     return $title;
 }
 
+// After loading the $data array, add this:
+$userStarredImages = [];
+foreach ($data as $ip => $userData) {
+    if (!empty($userData['starred_images'])) {
+        $userStarredImages[$ip] = $userData;
+    }
+}
+
 // HTML output
 ?>
 <!DOCTYPE html>
@@ -149,6 +160,9 @@ function generateTitle($filename) {
             --star-color: #ffd700;
             --copy-button-bg: #009dff;
             --copy-button-hover: #81cfff;
+            --scrollbar-bg: rgba(255, 255, 255, 0.1);
+            --scrollbar-thumb: rgba(255, 255, 255, 0.3);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
         }
         body {
             font-family: Arial, sans-serif;
@@ -158,6 +172,7 @@ function generateTitle($filename) {
             margin: 0;
             padding: 20px;
             padding-bottom: 60px;
+            padding-top: 20px;
         }
         h1 {
             text-align: center;
@@ -294,49 +309,70 @@ function generateTitle($filename) {
             color: #bbb;
             text-decoration: none;
         }
-        #starred-footer {
+        #starred-footers-container {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
+            display: flex;
+            flex-direction: column;
+            max-height: 50vh; /* Limit the height to half of the viewport */
+            overflow-y: auto;
+        }
+        .starred-footer {
             background-color: rgba(0,0,0,0.8);
             color: #fff;
             padding: 10px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: space-between; /* This will space out the child elements */
             backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
-        #starred-list-container {
+        .starred-footer .user-name {
+            min-width: 100px;
+            font-weight: bold;
+            margin-right: 10px;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+        .starred-footer .user-name.editable {
+            cursor: pointer;
+        }
+        .starred-footer .user-name.editable:hover::after {
+            content: '✎';
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            opacity: 0.7;
+            padding-left: 5px;
+        }
+        .starred-list-container {
             flex-grow: 1;
             overflow-x: auto;
-            margin-right: 10px;
-            height: 100px;
-            overflow-y: hidden;
+            margin: 0 10px;
+            border-radius: 4px;
+            height: 80px;
         }
-        #starred-list {
+        .starred-list {
             display: inline-flex;
             gap: 10px;
         }
-        #copy-button {
-            position: sticky;
-            right: 10px;
-            flex-shrink: 0;
-        }
-        #starred-footer span {
-            margin-right: 10px;
-        }
         .starred-thumbnail {
             position: relative;
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             cursor: pointer;
+            margin: 2px;
         }
         .starred-thumbnail img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 4px;
+            border-radius: 10px;
         }
         .starred-thumbnail .thumbnail-buttons {
             position: absolute;
@@ -370,21 +406,26 @@ function generateTitle($filename) {
             border-radius: 4px;
             backdrop-filter: blur(5px);
         }
-        .footer-button {
-            background-color: var(--copy-button-bg);
+        .copy-button {
+            background: none;
             border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 2em;
-            margin: 4px 2px;
+            color: var(--button-color);
             cursor: pointer;
-            border-radius: 4px;
+            transition: color 0.2s ease, transform 0.2s ease;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .footer-button:hover {
-            background-color: var(--copy-button-hover);
+        .copy-button:hover {
+            transform: scale(1.2);
+        }
+        .copy-button svg {
+            width: 24px;
+            height: 24px;
+        }
+        body {
+            padding-bottom: 60px;
         }
         #toast {
             visibility: hidden;
@@ -447,6 +488,62 @@ function generateTitle($filename) {
             padding: 10px;
             margin-bottom: 10px;
         }
+        .footer-button {
+            background-color: var(--copy-button-bg);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 2em;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .footer-button:hover {
+            background-color: var(--copy-button-hover);
+        }
+        .user-name-input {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 1em;
+            width: 200px;
+        }
+        /* Scrollbar styles */
+        /* For Webkit browsers (Chrome, Safari) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-bg);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+
+        /* For Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+        }
+
+        /* Make sure the body has a scrollbar */
+        body {
+            overflow-y: scroll;
+        }
     </style>
 </head>
 <body>
@@ -479,6 +576,9 @@ function generateTitle($filename) {
     ?>
     </div>
 
+    <!-- Add this spacer div after the gallery -->
+    <div id="footer-spacer"></div>
+
     <div id="imageModal" class="modal">
         <span class="close" aria-label="Close modal">&times;</span>
         <span class="prev" aria-label="Previous image">&#10094;</span>
@@ -493,23 +593,38 @@ function generateTitle($filename) {
         </div>
     </div>
 
-    <div id="starred-footer">
-        <div id="starred-list-container">
-            <div id="starred-list"></div>
-        </div>
-        <button id="copy-button" class="footer-button">Copy<br/>Names</button>
+    <div id="starred-footers-container">
+        <?php if (!empty($userStarredImages)): ?>
+            <?php foreach ($userStarredImages as $ip => $userData): ?>
+            <div class="starred-footer" data-user-ip="<?php echo $ip; ?>">
+                <span class="user-name"><?php echo htmlspecialchars($userData['name']); ?></span>
+                <div class="starred-list-container">
+                    <div class="starred-list">
+                        <?php foreach ($userData['starred_images'] as $image): 
+                            $thumbPath = ($subDir ? '/' . $subDir : '') . '/_data/thumbs/' . $image;
+                            $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $image;
+                        ?>
+                            <div class="starred-thumbnail" data-full-image="<?php echo $fullImagePath; ?>">
+                                <img src="<?php echo $thumbPath; ?>" alt="<?php echo $image; ?>">
+                                <?php if ($ip === $user_ip): ?>
+                                <div class="thumbnail-buttons">
+                                    <button title="Unstar">★</button>
+                                    <button title="Download">⬇️</button>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <button class="copy-button" title="Copy Names">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
     <div id="toast">Image filenames copied to clipboard!</div>
-
-    <div id="nameModal" class="modal">
-        <div class="modal-content" style="background-color: var(--card-bg); padding: 20px; border-radius: 8px;">
-            <h2>Edit Your Name</h2>
-            <input type="text" id="nameInput" value="<?php echo htmlspecialchars($data[$user_ip]['name']); ?>" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-            <button id="saveName" class="footer-button">Save</button>
-            <button id="cancelName" class="footer-button" style="background-color: #ff4444;">Cancel</button>
-        </div>
-    </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -522,9 +637,8 @@ function generateTitle($filename) {
         const closeBtn = document.querySelector('.close');
         const prevBtn = document.querySelector('.prev');
         const nextBtn = document.querySelector('.next');
-        const starredFooter = document.getElementById('starred-footer');
-        const starredList = document.getElementById('starred-list');
-        const copyButton = document.getElementById('copy-button');
+        const starredFootersContainer = document.getElementById('starred-footers-container');
+        const starredFooters = starredFootersContainer.querySelectorAll('.starred-footer');
         let currentImageIndex = 0;
         const images = Array.from(document.querySelectorAll('.image-container'));
 
@@ -613,66 +727,143 @@ function generateTitle($filename) {
                     if (modal.style.display === 'block' && images[currentImageIndex] === container) {
                         updateModalStarButton(container);
                     }
-                    updateStarredFooter();
+                    updateStarredFooters();
                 }
             } catch (error) {
                 console.error('Error toggling star:', error);
             }
         }
 
-        function updateStarredFooter() {
-            starredList.innerHTML = '';
+        function updateStarredFooters() {
+            const currentUserIp = '<?php echo $user_ip; ?>';
+            const starredFootersContainer = document.getElementById('starred-footers-container');
+            const starredFooters = starredFootersContainer.querySelectorAll('.starred-footer');
             const starredImages = Array.from(document.querySelectorAll('.image-container.starred'));
-            starredImages.forEach(container => {
-                const img = container.querySelector('img');
-                const thumbContainer = document.createElement('div');
-                thumbContainer.className = 'starred-thumbnail';
-                thumbContainer.imageContainer = container;
-                
-                const thumbImg = document.createElement('img');
-                thumbImg.src = img.src;
-                thumbImg.alt = img.alt;
-                
-                const buttonsContainer = document.createElement('div');
-                buttonsContainer.className = 'thumbnail-buttons';
-                
-                const unstarButton = document.createElement('button');
-                unstarButton.textContent = '★';
-                unstarButton.title = 'Unstar';
-                unstarButton.setAttribute('aria-label', 'Unstar image');
-                
-                const downloadButton = document.createElement('button');
-                downloadButton.textContent = '⬇️';
-                downloadButton.title = 'Download';
-                downloadButton.setAttribute('aria-label', 'Download image');
-                
-                buttonsContainer.appendChild(unstarButton);
-                buttonsContainer.appendChild(downloadButton);
-                
-                thumbContainer.appendChild(thumbImg);
-                thumbContainer.appendChild(buttonsContainer);
-                starredList.appendChild(thumbContainer);
+
+            starredFooters.forEach(footer => {
+                const userIp = footer.dataset.userIp;
+                const starredList = footer.querySelector('.starred-list');
+                const existingThumbnails = Array.from(starredList.querySelectorAll('.starred-thumbnail'));
+
+                if (userIp === currentUserIp) {
+                    // Update current user's footer
+                    existingThumbnails.forEach(thumb => {
+                        const matchingContainer = starredImages.find(container => 
+                            container.querySelector('img').dataset.fullImage === thumb.dataset.fullImage
+                        );
+                        if (!matchingContainer) {
+                            thumb.remove();
+                        }
+                    });
+
+                    starredImages.forEach(container => {
+                        const img = container.querySelector('img');
+                        const existingThumb = starredList.querySelector(`.starred-thumbnail[data-full-image="${img.dataset.fullImage}"]`);
+                        if (!existingThumb) {
+                            const newThumb = createStarredThumbnail(img.src, img.dataset.fullImage, true);
+                            starredList.appendChild(newThumb);
+                        }
+                    });
+                }
+
+                // Show/hide footer based on whether there are any starred images
+                footer.style.display = starredList.children.length > 0 ? 'flex' : 'none';
             });
-            starredFooter.style.display = starredImages.length > 0 ? 'flex' : 'none';
-            copyButton.style.display = starredImages.length > 0 ? 'inline-block' : 'none';
+
+            // Add a new footer for the current user if it doesn't exist
+            if (!starredFootersContainer.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"]`) && starredImages.length > 0) {
+                const newFooter = createStarredFooter(currentUserIp, '<?php echo htmlspecialchars($data[$user_ip]['name']); ?>');
+                starredFootersContainer.appendChild(newFooter);
+                updateStarredFooters(); // Recursive call to update the newly added footer
+            }
+
+            // Add this line at the end of the function
+            updateFooterSpacerHeight();
+
+            const currentUserFooter = document.querySelector(`.starred-footer[data-user-ip="<?php echo $user_ip; ?>"]`);
+            if (currentUserFooter) {
+                const nameSpan = currentUserFooter.querySelector('.user-name');
+                if (nameSpan) {
+                    console.log('Adding click event listener to:', nameSpan);
+                    nameSpan.classList.add('editable');
+                    nameSpan.addEventListener('click', function() {
+                        console.log('Name clicked');
+                        makeNameEditable(this);
+                    });
+                } else {
+                    console.log('Name span not found');
+                }
+            } else {
+                console.log('Current user footer not found');
+            }
         }
 
-        starredList.addEventListener('click', function(e) {
+        function createStarredFooter(userIp, userName) {
+            const footer = document.createElement('div');
+            footer.className = 'starred-footer';
+            footer.dataset.userIp = userIp;
+            footer.innerHTML = `
+                <span class="user-name">${userName}</span>
+                <div class="starred-list-container">
+                    <div class="starred-list"></div>
+                </div>
+                <button class="copy-button" title="Copy Names">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+            `;
+            return footer;
+        }
+
+        function createStarredThumbnail(src, fullImagePath, isCurrentUser) {
+            const thumbContainer = document.createElement('div');
+            thumbContainer.className = 'starred-thumbnail';
+            thumbContainer.dataset.fullImage = fullImagePath;
+
+            const thumbImg = document.createElement('img');
+            thumbImg.src = src;
+            thumbImg.alt = fullImagePath.split('/').pop();
+
+            thumbContainer.appendChild(thumbImg);
+
+            if (isCurrentUser) {
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.className = 'thumbnail-buttons';
+                buttonsContainer.innerHTML = `
+                    <button title="Unstar">★</button>
+                    <button title="Download">⬇️</button>
+                `;
+                thumbContainer.appendChild(buttonsContainer);
+            }
+
+            return thumbContainer;
+        }
+
+        document.body.addEventListener('click', function(e) {
             const thumbContainer = e.target.closest('.starred-thumbnail');
             if (!thumbContainer) return;
 
             if (e.target.matches('.thumbnail-buttons button')) {
                 e.stopPropagation();
                 if (e.target.title === 'Unstar') {
-                    toggleStar(thumbContainer.imageContainer);
+                    const matchingContainer = Array.from(document.querySelectorAll('.image-container')).find(container => 
+                        container.querySelector('img').dataset.fullImage === thumbContainer.dataset.fullImage
+                    );
+                    if (matchingContainer) {
+                        toggleStar(matchingContainer);
+                    }
                 } else if (e.target.title === 'Download') {
                     const link = document.createElement('a');
-                    link.href = thumbContainer.imageContainer.querySelector('img').dataset.fullImage;
+                    link.href = thumbContainer.dataset.fullImage;
                     link.download = link.href.split('/').pop();
                     link.click();
                 }
             } else {
-                openModal(thumbContainer.imageContainer);
+                const matchingContainer = Array.from(document.querySelectorAll('.image-container')).find(container => 
+                    container.querySelector('img').dataset.fullImage === thumbContainer.dataset.fullImage
+                );
+                if (matchingContainer) {
+                    openModal(matchingContainer);
+                }
             }
         });
 
@@ -683,71 +874,92 @@ function generateTitle($filename) {
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        copyButton.addEventListener('click', function() {
-            const starredImages = Array.from(document.querySelectorAll('.image-container.starred'));
-            const imageNames = starredImages.map(container => container.dataset.image);
-            const namesText = imageNames.join('\n');
-            
-            navigator.clipboard.writeText(namesText).then(function() {
-                showToast('Image filenames copied to clipboard!');
-            }, function(err) {
-                console.error('Could not copy text: ', err);
-                showToast('Failed to copy image filenames.');
-            });
+        document.body.addEventListener('click', function(e) {
+            if (e.target.closest('.copy-button')) {
+                const copyButton = e.target.closest('.copy-button');
+                const footer = copyButton.closest('.starred-footer');
+                const starredList = footer.querySelector('.starred-list');
+                const thumbnails = starredList.querySelectorAll('.starred-thumbnail');
+                const imageNames = Array.from(thumbnails).map(thumb => thumb.dataset.fullImage.split('/').pop());
+                const namesText = imageNames.join('\n');
+                
+                navigator.clipboard.writeText(namesText).then(function() {
+                    showToast('Image filenames copied to clipboard!');
+                    const originalContent = copyButton.innerHTML;
+                    copyButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalContent;
+                    }, 2000);
+                }, function(err) {
+                    console.error('Could not copy text: ', err);
+                    showToast('Failed to copy image filenames.');
+                });
+            }
         });
 
-        // Initial update of starred footer
-        updateStarredFooter();
+        // Call updateStarredFooters on page load
+        updateStarredFooters();
 
-        // Add this to your existing JavaScript
-        const nameModal = document.getElementById('nameModal');
-        const nameInput = document.getElementById('nameInput');
-        const saveName = document.getElementById('saveName');
-        const cancelName = document.getElementById('cancelName');
+        function makeNameEditable(nameSpan) {
+            console.log('makeNameEditable called');
+            const currentName = nameSpan.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentName;
+            input.className = 'user-name-input';
 
-        // Add a button to open the name modal
-        const editNameButton = document.createElement('button');
-        editNameButton.textContent = 'Edit Name';
-        editNameButton.className = 'footer-button';
-        editNameButton.style.marginRight = '10px';
-        copyButton.parentNode.insertBefore(editNameButton, copyButton);
-
-        editNameButton.addEventListener('click', function() {
-            nameModal.style.display = 'block';
-        });
-
-        saveName.addEventListener('click', async function() {
-            const newName = nameInput.value.trim();
-            if (newName) {
-                try {
-                    const response = await fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+            function saveNameChange() {
+                const newName = input.value.trim();
+                if (newName && newName !== currentName) {
+                    fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
                         body: `update_name=${encodeURIComponent(newName)}`
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            nameSpan.textContent = result.name;
+                            showToast('Name updated successfully!');
+                        } else {
+                            showToast(result.error || 'Failed to update name.');
+                            nameSpan.textContent = currentName;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating name:', error);
+                        showToast('Failed to update name.');
+                        nameSpan.textContent = currentName;
                     });
-                    if (response.ok) {
-                        showToast('Name updated successfully!');
-                        nameModal.style.display = 'none';
-                    }
-                } catch (error) {
-                    console.error('Error updating name:', error);
-                    showToast('Failed to update name.');
+                } else {
+                    nameSpan.textContent = currentName;
                 }
+                nameSpan.style.display = '';
+                input.remove(); // Remove the input field
             }
-        });
 
-        cancelName.addEventListener('click', function() {
-            nameModal.style.display = 'none';
-        });
+            input.addEventListener('blur', saveNameChange);
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    this.blur();
+                }
+            });
 
-        // Close the name modal when clicking outside of it
-        window.addEventListener('click', function(e) {
-            if (e.target == nameModal) {
-                nameModal.style.display = 'none';
-            }
-        });
+            nameSpan.style.display = 'none';
+            nameSpan.parentNode.insertBefore(input, nameSpan);
+            input.focus();
+        }
+
+        // Add this function to update the footer spacer height
+        function updateFooterSpacerHeight() {
+            const footerHeight = document.getElementById('starred-footers-container').offsetHeight;
+            document.getElementById('footer-spacer').style.height = footerHeight + 'px';
+        }
+
+        // Call this function initially and whenever the starred footers are updated
+        updateFooterSpacerHeight();
     });
     </script>
 </body>
