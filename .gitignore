@@ -1,0 +1,24 @@
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!index.php
+
+# ...and not this directory...
+!_data/
+
+# ...and not anything in the _data directory...
+!_data/**
+
+# But do ignore the contents of the thumbs directory
+_data/thumbs/*
+
+# And ignore the starred_images.txt file
+_data/starred_images.txt
+
+# Keep the thumbs directory itself
+!_data/thumbs/.gitkeep
+
+# But still ignore .DS_Store files
+.DS_Store
