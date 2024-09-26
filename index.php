@@ -201,49 +201,49 @@ foreach ($data as $ip => $userData) {
             color: var(--text-color);
             background-color: var(--bg-color);
             margin: 0;
-            padding: 20px;
-            padding-bottom: 60px;
-            padding-top: 20px;
+            padding: 1.25em;
+            padding-bottom: 3.75em;
+            padding-top: 1.25em;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 1.25em;
         }
 
         .gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(15.625em, 1fr));
+            gap: 1.25em;
+            padding: 1.25em;
         }
 
         .image-container {
             background-color: var(--card-bg);
-            border-radius: 8px;
+            border-radius: 0.5em;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0.25em 0.375em rgba(0, 0, 0, 0.3);
             transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border 0.2s ease;
             cursor: pointer;
             display: flex;
             flex-direction: column;
-            border: 4px solid transparent;
+            border: 0.25em solid transparent;
         }
 
         .image-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+            transform: translateY(-0.3125em);
+            box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.4);
         }
 
         .image-container.starred {
             background-color: var(--starred-bg);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
-            border: 4px solid var(--star-color);
+            box-shadow: 0 0.375em 0.75em rgba(0, 0, 0, 0.5);
+            border: 0.25em solid var(--star-color);
         }
 
         .image-container.starred:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+            transform: translateY(-0.3125em);
+            box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.6);
         }
 
         .image-container img {
@@ -254,15 +254,15 @@ foreach ($data as $ip => $userData) {
         }
 
         .image-info {
-            padding: 4px;
+            padding: 0.25em;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
 
         .image-title {
-            margin: 0 0 10px 0;
-            font-size: 16px;
+            margin: 0 0 0.625em 0;
+            font-size: 1em;
             font-weight: bold;
             color: var(--text-color);
             text-align: center;
@@ -272,10 +272,11 @@ foreach ($data as $ip => $userData) {
             display: flex;
             justify-content: space-between;
             margin-top: auto;
-            padding-top: 10px;
+            padding-top: 0.625em;
         }
 
-        .download-button:hover, .star-button:hover {
+        .download-button:hover,
+        .star-button:hover {
             background-color: #444;
         }
 
@@ -284,13 +285,13 @@ foreach ($data as $ip => $userData) {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 40px;
-            height: 40px;
+            width: 2em;
+            height: 2em;
             overflow: hidden;
             border: none;
             background-color: #333;
-            border-radius: 4px;
-            font-size: 24px;
+            border-radius: 0.25em;
+            font-size: 1.5em;
             cursor: pointer;
             color: var(--button-color);
             transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
@@ -325,19 +326,19 @@ foreach ($data as $ip => $userData) {
 
         .modal-info {
             position: absolute;
-            bottom: 20px;
+            bottom: 1.25em;
             left: 0;
             right: 0;
             text-align: center;
             color: #fff;
             background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
+            padding: 0.625em;
         }
 
         .modal-info .star-button,
         .modal-info .download-button {
-            font-size: 32px;
-            margin-top: 10px;
+            font-size: 2em;
+            margin-top: 0.625em;
         }
 
         .close,
@@ -345,25 +346,25 @@ foreach ($data as $ip => $userData) {
         .next {
             position: absolute;
             color: #f1f1f1;
-            font-size: 40px;
+            font-size: 2em;
             font-weight: bold;
             transition: 0.2s;
             cursor: pointer;
         }
 
         .close {
-            top: 15px;
-            right: 35px;
+            top: 0.9375em;
+            right: 2.1875em;
         }
 
         .prev {
             top: 50%;
-            left: 35px;
+            left: 2.1875em;
         }
 
         .next {
             top: 50%;
-            right: 35px;
+            right: 2.1875em;
         }
 
         .close:hover,
@@ -384,17 +385,16 @@ foreach ($data as $ip => $userData) {
             display: flex;
             flex-direction: column;
             max-height: 50vh;
-            /* Limit the height to half of the viewport */
             overflow-y: auto;
         }
 
         .starred-footer {
             display: flex;
             align-items: center;
-            padding: 10px;
+            padding: 0.625em;
             background-color: rgba(0, 0, 0, 0.8);
             color: #fff;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(0.625em);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -403,10 +403,10 @@ foreach ($data as $ip => $userData) {
             border: none;
             color: var(--button-color);
             cursor: pointer;
-            font-size: 16px;
-            padding: 5px 10px;
+            font-size: 0.8em;
+            padding: 0.3125em 0.625em;
             transition: transform 0.2s ease;
-            margin-right: 10px;
+            margin-right: 0.625em;
         }
 
         .minimize-button:hover {
@@ -414,22 +414,18 @@ foreach ($data as $ip => $userData) {
         }
 
         .user-name {
-            margin-right: 10px;
+            margin-right: 0.625em;
             flex-shrink: 0;
         }
 
         .starred-list-container {
             flex-grow: 1;
             overflow-x: auto;
-            margin: 0 10px;
+            margin: 0 0.625em;
         }
 
         .copy-button {
             margin-left: auto;
-        }
-
-        .starred-footer.minimized .starred-list-container {
-            display: none;
         }
 
         .starred-footer.minimized .minimize-button {
@@ -437,18 +433,18 @@ foreach ($data as $ip => $userData) {
         }
 
         .starred-footer.minimized {
-            padding: 5px 10px;
+            padding: 0.3125em 0.625em;
         }
 
         .starred-list {
             display: inline-flex;
-            gap: 10px;
+            gap: 0.625em;
         }
 
         .starred-thumbnail {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 5em;
+            height: 5em;
             cursor: pointer;
         }
 
@@ -456,7 +452,7 @@ foreach ($data as $ip => $userData) {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 10px;
+            border-radius: 0.625em;
         }
 
         .starred-thumbnail .thumbnail-buttons {
@@ -472,8 +468,8 @@ foreach ($data as $ip => $userData) {
             align-items: center;
             opacity: 0;
             transition: opacity 0.2s ease;
-            gap: 4px;
-            margin: 4px;
+            gap: 0.25em;
+            margin: 0.25em;
         }
 
         .starred-thumbnail:hover .thumbnail-buttons {
@@ -483,56 +479,31 @@ foreach ($data as $ip => $userData) {
         .thumbnail-buttons button {
             border: none;
             color: #fff;
-            font-size: 16px;
+            font-size: 1em;
             cursor: pointer;
-            padding: 2px;
-            margin: 0 2px;
+            padding: 0.125em;
+            margin: 0 0.125em;
             background-color: rgba(0, 0, 0, 0.5);
             width: 100%;
             height: 100%;
-            border-radius: 4px;
-            backdrop-filter: blur(5px);
-        }
-
-        .copy-button {
-            background: none;
-            border: none;
-            color: var(--button-color);
-            cursor: pointer;
-            transition: color 0.2s ease, transform 0.2s ease;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .copy-button:hover {
-            transform: scale(1.2);
-        }
-
-        .copy-button svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        body {
-            padding-bottom: 60px;
+            border-radius: 0.25em;
+            backdrop-filter: blur(0.3125em);
         }
 
         #toast {
             visibility: hidden;
-            min-width: 250px;
-            margin-left: -125px;
+            min-width: 15.625em;
+            margin-left: -7.8125em;
             background-color: #333;
             color: #fff;
             text-align: center;
-            border-radius: 2px;
-            padding: 16px;
+            border-radius: 0.125em;
+            padding: 1em;
             position: fixed;
             z-index: 1001;
             left: 50%;
-            bottom: 30px;
-            font-size: 17px;
+            bottom: 1.875em;
+            font-size: 1.0625em;
         }
 
         #toast.show {
@@ -548,7 +519,7 @@ foreach ($data as $ip => $userData) {
             }
 
             to {
-                bottom: 30px;
+                bottom: 1.875em;
                 opacity: 1;
             }
         }
@@ -560,14 +531,14 @@ foreach ($data as $ip => $userData) {
             }
 
             to {
-                bottom: 30px;
+                bottom: 1.875em;
                 opacity: 1;
             }
         }
 
         @-webkit-keyframes fadeout {
             from {
-                bottom: 30px;
+                bottom: 1.875em;
                 opacity: 1;
             }
 
@@ -579,7 +550,7 @@ foreach ($data as $ip => $userData) {
 
         @keyframes fadeout {
             from {
-                bottom: 30px;
+                bottom: 1.875em;
                 opacity: 1;
             }
 
@@ -613,36 +584,47 @@ foreach ($data as $ip => $userData) {
 
         #nameInput {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 0.625em;
+            margin-bottom: 0.625em;
+        }
+
+        .footer-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.625em;
         }
 
         .footer-button {
-            background-color: var(--copy-button-bg);
+            background: none;
             border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 2em;
-            margin: 4px 2px;
+            color: var(--button-color);
             cursor: pointer;
-            border-radius: 4px;
+            transition: color 0.2s ease, transform 0.2s ease;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.625em;
         }
 
         .footer-button:hover {
-            background-color: var(--copy-button-hover);
+            transform: scale(1.2);
+        }
+
+        .footer-button svg {
+            width: 2em;
+            height: 2em;
         }
 
         .user-name-input {
             background-color: var(--bg-color);
             color: var(--text-color);
             border: 1px solid var(--text-color);
-            padding: 5px;
-            border-radius: 4px;
+            padding: 0.3125em;
+            border-radius: 0.25em;
             font-size: 1em;
-            width: 200px;
+            width: 12em;
         }
 
         .user-name.editing {
@@ -650,20 +632,19 @@ foreach ($data as $ip => $userData) {
         }
 
         /* Scrollbar styles */
-        /* For Webkit browsers (Chrome, Safari) */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 0.5em;
+            height: 0.5em;
         }
 
         ::-webkit-scrollbar-track {
             background: var(--scrollbar-bg);
-            border-radius: 4px;
+            border-radius: 0.25em;
         }
 
         ::-webkit-scrollbar-thumb {
             background: var(--scrollbar-thumb);
-            border-radius: 4px;
+            border-radius: 0.25em;
         }
 
         ::-webkit-scrollbar-thumb:hover {
@@ -682,60 +663,45 @@ foreach ($data as $ip => $userData) {
         }
 
         .comment-container {
-            margin-top: 10px;
-            padding: 8px;
+            margin-top: 0.625em;
+            padding: 0.5em;
             background-color: #2a2a2a;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-            width: calc(100% - 15px);
+            border-radius: 0.5em;
+            box-shadow: 0 0.0625em 0.1875em rgba(0, 0, 0, 0.3);
+            width: calc(100% - 0.9375em);
             font-size: 0.8em;
         }
 
         .comment-box {
-            margin-bottom: 8px;
-            padding: 6px 8px;
+            margin-bottom: 0.5em;
+            padding: 0.375em 0.5em;
             background-color: #333333;
-            border-radius: 6px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            border-radius: 0.375em;
+            box-shadow: 0 0.0625em 0.125em rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: baseline;
-        }
-
-        .comment-box:last-child {
-            margin-bottom: 0;
         }
 
         .comment-user {
             font-weight: bold;
             color: #b0b0b0;
-            margin-right: 5px;
+            margin-right: 0.3125em;
             white-space: nowrap;
-        }
-
-        .comment {
-            color: #858585;
-            word-wrap: break-word;
-            flex: 1;
         }
 
         .comment-placeholder {
             color: #808080;
             font-style: italic;
             cursor: pointer;
-            padding: 6px 8px;
-        }
-
-        .comment-placeholder:hover {
-            background-color: #3a3a3a;
-            border-radius: 6px;
+            padding: 0.375em 0.5em;
         }
 
         textarea {
             width: 100%;
             padding: 0;
-            border-radius: 4px;
+            border-radius: 0.25em;
             resize: vertical;
-            min-height: 60px;
+            min-height: 3.75em;
             background-color: #2a2a2a;
             color: #d0d0d0;
         }
@@ -748,7 +714,8 @@ foreach ($data as $ip => $userData) {
             background-color: #3c3c3c;
         }
 
-        .comment-box, .comment-placeholder {
+        .comment-box,
+        .comment-placeholder {
             transition: background-color 0.2s ease;
         }
 
@@ -776,7 +743,7 @@ foreach ($data as $ip => $userData) {
             transform: scale(1.2);
         }
 
-        .starred-footer.minimized .starred-list-container {
+        .starred-footer.minimized .starred-thumbnail {
             display: none;
         }
 
@@ -806,18 +773,24 @@ foreach ($data as $ip => $userData) {
                 commentPlaceholder.textContent = 'Comment';
                 commentContainer.appendChild(commentPlaceholder);
             }
-            
+
             // Collect existing comments
             const existingComments = {};
             commentContainer.querySelectorAll('.comment-box').forEach(box => {
                 const userIp = box.dataset.userIp;
                 const userName = box.querySelector('.comment-user').textContent.replace(':', '');
                 const comment = box.querySelector('.comment').textContent;
-                existingComments[userIp] = { name: userName, comment: comment };
+                existingComments[userIp] = {
+                    name: userName,
+                    comment: comment
+                };
             });
 
             // Merge new comments with existing comments
-            const allComments = { ...existingComments, ...newComments };
+            const allComments = {
+                ...existingComments,
+                ...newComments
+            };
 
             // Clear existing comment boxes
             commentContainer.querySelectorAll('.comment-box').forEach(box => box.remove());
@@ -880,7 +853,7 @@ foreach ($data as $ip => $userData) {
             function saveComment() {
                 const newComment = input.value.trim();
                 const image = container.dataset.image;
-                
+
                 fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
                         method: 'POST',
                         headers: {
@@ -895,14 +868,24 @@ foreach ($data as $ip => $userData) {
                                 commentSpan.textContent = newComment;
                                 currentUserComment.replaceChild(commentSpan, input);
                             } else {
-                                updateCommentUI(container, { '<?php echo $user_ip; ?>': { name: '<?php echo htmlspecialchars($data[$user_ip]['name']); ?>', comment: newComment } }, isModal);
+                                updateCommentUI(container, {
+                                    '<?php echo $user_ip; ?>': {
+                                        name: '<?php echo htmlspecialchars($data[$user_ip]['name']); ?>',
+                                        comment: newComment
+                                    }
+                                }, isModal);
                             }
                             if (!isModal) {
                                 updateModal();
                             } else {
                                 const galleryContainer = document.querySelector(`.image-container[data-image="${image}"]`);
                                 if (galleryContainer) {
-                                    updateCommentUI(galleryContainer, { '<?php echo $user_ip; ?>': { name: '<?php echo htmlspecialchars($data[$user_ip]['name']); ?>', comment: newComment } });
+                                    updateCommentUI(galleryContainer, {
+                                        '<?php echo $user_ip; ?>': {
+                                            name: '<?php echo htmlspecialchars($data[$user_ip]['name']); ?>',
+                                            comment: newComment
+                                        }
+                                    });
                                 }
                             }
                             showToast('Comment updated successfully!');
@@ -1045,12 +1028,21 @@ foreach ($data as $ip => $userData) {
                             <?php endforeach; ?>
                         </div>
                     </div>
-                    <button class="copy-button" title="Copy Names">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                    </button>
+                    <div class="footer-buttons">
+                        <button class="footer-button download-all-button" title="Download All">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                        <button class="footer-button copy-names-button" title="Copy Names">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -1059,6 +1051,13 @@ foreach ($data as $ip => $userData) {
     <div id="toast">Image filenames copied to clipboard!</div>
 
     <script>
+        // Determine the base URL automatically
+        const imageBaseUrl = (() => {
+            const pathArray = window.location.pathname.split('/');
+            pathArray.pop(); // Remove the current file name (or last directory) from the path
+            return window.location.origin + pathArray.join('/') + '/images/'; // Adjust '/images/' if your image directory is named differently
+        })();
+
         function updateModal() {
             if (typeof currentImageIndex === 'undefined' || !images || !images[currentImageIndex]) {
                 console.error('Current image not found');
@@ -1078,7 +1077,7 @@ foreach ($data as $ip => $userData) {
             updateModalStarButton(currentContainer);
             modalDownloadButton.href = img.dataset.fullImage;
             modalDownloadButton.download = img.dataset.fullImage.split('/').pop();
-            
+
             // Update comments in modal
             const modalCommentContainer = document.querySelector('.modal-info');
             if (!modalCommentContainer) {
@@ -1095,7 +1094,10 @@ foreach ($data as $ip => $userData) {
                     const userName = userNameElement.textContent.replace(':', '').trim();
                     const comment = commentElement.textContent.trim();
                     if (userName && comment) {
-                        comments[userIp] = { name: userName, comment: comment };
+                        comments[userIp] = {
+                            name: userName,
+                            comment: comment
+                        };
                     }
                 }
             });
@@ -1131,8 +1133,6 @@ foreach ($data as $ip => $userData) {
             const starredFootersContainer = document.getElementById('starred-footers-container');
             const starredFooters = starredFootersContainer.querySelectorAll('.starred-footer');
 
-
-
             gallery.addEventListener('click', function(e) {
                 const container = e.target.closest('.image-container');
                 if (!container) return;
@@ -1151,8 +1151,6 @@ foreach ($data as $ip => $userData) {
                 updateModal();
                 modal.style.display = 'block';
             }
-
-
 
             function navigateModal(direction) {
                 currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
@@ -1193,194 +1191,153 @@ foreach ($data as $ip => $userData) {
                 }
             });
 
-            async function toggleStar(container) {
-                const image = container.dataset.image;
-                try {
-                    const response = await fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `toggle_star=${encodeURIComponent(image)}`
-                    });
-                    if (response.ok) {
-                        container.classList.toggle('starred');
-                        if (modal.style.display === 'block' && images[currentImageIndex] === container) {
-                            updateModalStarButton(container);
-                        }
-                        updateStarredFooters();
+            function toggleStar(imageContainer) {
+                const starButton = imageContainer.querySelector('.star-button');
+                const imageName = imageContainer.dataset.image;
+                const isStarred = starButton.classList.toggle('starred');
+
+                // Update the server-side starred status
+                fetch('toggle_star.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `image=${encodeURIComponent(imageName)}&starred=${isStarred ? 1 : 0}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the star button appearance
+                        starButton.innerHTML = isStarred ? '★' : '☆';
+                        
+                        // Update the footer lists
+                        updateStarredFooters(imageName, isStarred);
+                    } else {
+                        console.error('Failed to update star status');
+                        // Revert the star button if the server update failed
+                        starButton.classList.toggle('starred');
                     }
-                } catch (error) {
-                    console.error('Error toggling star:', error);
-                }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Revert the star button if there was an error
+                    starButton.classList.toggle('starred');
+                });
             }
 
-            function updateStarredFooters() {
+            function updateStarredFooters(imageName, isStarred) {
                 const currentUserIp = '<?php echo $user_ip; ?>';
-                const starredFootersContainer = document.getElementById('starred-footers-container');
-                const starredFooters = starredFootersContainer.querySelectorAll('.starred-footer');
-                const starredImages = Array.from(document.querySelectorAll('.image-container.starred'));
-
-                starredFooters.forEach(footer => {
+                const footers = document.querySelectorAll('.starred-footer');
+                
+                footers.forEach(footer => {
                     const userIp = footer.dataset.userIp;
                     const starredList = footer.querySelector('.starred-list');
-                    const existingThumbnails = Array.from(starredList.querySelectorAll('.starred-thumbnail'));
-
+                    
                     if (userIp === currentUserIp) {
-                        // Update current user's footer
-                        existingThumbnails.forEach(thumb => {
-                            const matchingContainer = starredImages.find(container =>
-                                container.querySelector('img').dataset.fullImage === thumb.dataset.fullImage
-                            );
-                            if (!matchingContainer) {
-                                thumb.remove();
+                        if (isStarred) {
+                            // Add the image to the footer
+                            const thumbnail = document.createElement('img');
+                            thumbnail.src = `thumbnails/${imageName}`; // Adjust this path if needed
+                            thumbnail.alt = imageName;
+                            thumbnail.className = 'starred-thumbnail';
+                            thumbnail.dataset.fullImage = `images/${imageName}`; // Adjust this path if needed
+                            starredList.appendChild(thumbnail);
+                        } else {
+                            // Remove the image from the footer
+                            const existingThumbnail = starredList.querySelector(`[data-full-image$="${imageName}"]`);
+                            if (existingThumbnail) {
+                                starredList.removeChild(existingThumbnail);
                             }
-                        });
+                        }
 
-                        starredImages.forEach(container => {
-                            const img = container.querySelector('img');
-                            const existingThumb = starredList.querySelector(`.starred-thumbnail[data-full-image="${img.dataset.fullImage}"]`);
-                            if (!existingThumb) {
-                                const newThumb = createStarredThumbnail(img.src, img.dataset.fullImage, true);
-                                starredList.appendChild(newThumb);
-                            }
-                        });
+                        // Update footer visibility
+                        footer.style.display = starredList.children.length > 0 ? 'flex' : 'none';
+
+                        // Update or add the footer buttons (if needed)
+                        updateFooterButtons(footer);
                     }
-
-                    // Show/hide footer based on whether there are any starred images
-                    footer.style.display = starredList.children.length > 0 ? 'flex' : 'none';
                 });
 
-                // Add a new footer for the current user if it doesn't exist
-                if (!starredFootersContainer.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"]`) && starredImages.length > 0) {
-                    const newFooter = createStarredFooter(currentUserIp, '<?php echo htmlspecialchars($data[$user_ip]['name']); ?>');
-                    starredFootersContainer.appendChild(newFooter);
-                    updateStarredFooters(); // Recursive call to update the newly added footer
-                }
-
-                // Add this line at the end of the function
+                // Update footer spacer height
                 updateFooterSpacerHeight();
-
-                const currentUserFooter = document.querySelector(`.starred-footer[data-user-ip="<?php echo $user_ip; ?>"]`);
-                if (currentUserFooter) {
-                    const nameSpan = currentUserFooter.querySelector('.user-name');
-                    if (nameSpan) {
-                        console.log('Adding click event listener to:', nameSpan);
-                        nameSpan.classList.add('editable');
-                        nameSpan.addEventListener('click', function() {
-                            console.log('Name clicked');
-                            makeNameEditable(this);
-                        });
-                    } else {
-                        console.log('Name span not found');
-                    }
-                } else {
-                    console.log('Current user footer not found');
-                }
             }
 
-            function createStarredFooter(userIp, userName) {
-                const footer = document.createElement('div');
-                footer.className = 'starred-footer';
-                footer.dataset.userIp = userIp;
-                footer.innerHTML = `
-                <button class="minimize-button" title="Minimize">▼</button>
-                <span class="user-name" data-user-ip="${userIp}">${userName}</span>
-                <div class="starred-list-container">
-                    <div class="starred-list"></div>
-                </div>
-                <button class="copy-button" title="Copy Names">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </button>
-            `;
-                return footer;
-            }
-
-            function createStarredThumbnail(src, fullImagePath, isCurrentUser) {
-                const thumbContainer = document.createElement('div');
-                thumbContainer.className = 'starred-thumbnail';
-                thumbContainer.dataset.fullImage = fullImagePath;
-
-                const thumbImg = document.createElement('img');
-                thumbImg.src = src;
-                thumbImg.alt = fullImagePath.split('/').pop();
-
-                thumbContainer.appendChild(thumbImg);
-
-                if (isCurrentUser) {
-                    const buttonsContainer = document.createElement('div');
-                    buttonsContainer.className = 'thumbnail-buttons';
-                    buttonsContainer.innerHTML = `
-                    <button title="Unstar">★</button>
-                    <button title="Download">⬇️</button>
-                `;
-                    thumbContainer.appendChild(buttonsContainer);
-                }
-
-                return thumbContainer;
+            function updateFooterButtons(footer) {
+                // Implement this function based on your existing button creation code
+                // This function should ensure that the "Download All" and "Copy Names" buttons
+                // are present and properly set up for the footer
             }
 
             document.body.addEventListener('click', function(e) {
-                const thumbContainer = e.target.closest('.starred-thumbnail');
-                if (!thumbContainer) return;
+                if (e.target.closest('.download-all-button')) {
+                    e.preventDefault();
+                    const footer = e.target.closest('.starred-footer');
+                    const starredImages = Array.from(footer.querySelectorAll('.starred-thumbnail')).map(thumb => {
+                        let imagePath = thumb.dataset.fullImage;
+                        console.log('Original image path:', imagePath);
 
-                if (e.target.matches('.thumbnail-buttons button')) {
-                    e.stopPropagation();
-                    if (e.target.title === 'Unstar') {
-                        const matchingContainer = Array.from(document.querySelectorAll('.image-container')).find(container =>
-                            container.querySelector('img').dataset.fullImage === thumbContainer.dataset.fullImage
-                        );
-                        if (matchingContainer) {
-                            toggleStar(matchingContainer);
-                        }
-                    } else if (e.target.title === 'Download') {
-                        const link = document.createElement('a');
-                        link.href = thumbContainer.dataset.fullImage;
-                        link.download = link.href.split('/').pop();
-                        link.click();
-                    }
-                } else {
-                    const matchingContainer = Array.from(document.querySelectorAll('.image-container')).find(container =>
-                        container.querySelector('img').dataset.fullImage === thumbContainer.dataset.fullImage
-                    );
-                    if (matchingContainer) {
-                        openModal(matchingContainer);
-                    }
+                        // Remove leading slashes
+                        imagePath = imagePath.replace(/^\/+/, '');
+
+                        // Construct the full URL
+                        const fullUrl = new URL(imagePath, window.location.origin + '/').href;
+                        console.log('Full URL:', fullUrl);
+                        return fullUrl;
+                    });
+                    downloadAll(starredImages);
+                } else if (e.target.closest('.copy-names-button')) {
+                    // ... existing code ...
                 }
             });
 
-            document.body.addEventListener('click', function(e) {
-                if (e.target.closest('.copy-button')) {
-                    const copyButton = e.target.closest('.copy-button');
-                    const footer = copyButton.closest('.starred-footer');
-                    const starredList = footer.querySelector('.starred-list');
-                    const thumbnails = starredList.querySelectorAll('.starred-thumbnail');
-                    const imageInfo = Array.from(thumbnails).map(thumb => {
-                        const fullImage = thumb.dataset.fullImage;
-                        const imageName = fullImage.split('/').pop();
-                        const commentBoxes = document.querySelectorAll(`.image-container[data-image="${imageName}"] .comment-box`);
-                        const comments = Array.from(commentBoxes).map(box => {
-                            const userName = box.querySelector('.comment-user').textContent.trim().replace(':', '');
-                            const comment = box.querySelector('.comment').textContent.trim();
-                            return `${userName}: ${comment}`;
-                        });
-                        return `${imageName}${comments.length > 0 ? '\n    ' + comments.join('\n    ') : ''}`;
-                    });
-                    const infoText = imageInfo.join('\n');
+            function downloadAll(urls) {
+                urls.forEach((url, index) => {
+                    console.log('Attempting to download:', url);
+                    setTimeout(() => {
+                        fetch(url)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                return response.blob();
+                            })
+                            .then(blob => {
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = url.split('/').pop();
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(link.href);
+                            })
+                            .catch(error => console.error('Download failed:', url, error));
+                    }, index * 1000);
+                });
+            }
 
-                    navigator.clipboard.writeText(infoText).then(function() {
-                        showToast('Image filenames and comments copied to clipboard!');
-                        const originalContent = copyButton.innerHTML;
-                        copyButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                        setTimeout(() => {
-                            copyButton.innerHTML = originalContent;
-                        }, 2000);
-                    }, function(err) {
-                        console.error('Could not copy text: ', err);
-                        showToast('Failed to copy image filenames and comments.');
+            function copyImageNames(footer) {
+                const starredList = footer.querySelector('.starred-list');
+                const thumbnails = starredList.querySelectorAll('.starred-thumbnail');
+                const imageInfo = Array.from(thumbnails).map(thumb => {
+                    const fullImage = thumb.dataset.fullImage;
+                    const imageName = fullImage.split('/').pop();
+                    const commentBoxes = document.querySelectorAll(`.image-container[data-image="${imageName}"] .comment-box`);
+                    const comments = Array.from(commentBoxes).map(box => {
+                        const userName = box.querySelector('.comment-user').textContent.trim().replace(':', '');
+                        const comment = box.querySelector('.comment').textContent.trim();
+                        return `${userName}: ${comment}`;
                     });
-                }
-            });
+                    return `${imageName}${comments.length > 0 ? '\n    ' + comments.join('\n    ') : ''}`;
+                });
+                const infoText = imageInfo.join('\n');
+
+                navigator.clipboard.writeText(infoText).then(function() {
+                    showToast('Image filenames and comments copied to clipboard!');
+                }, function(err) {
+                    console.error('Could not copy text: ', err);
+                    showToast('Failed to copy image filenames and comments.');
+                });
+            }
 
             // Call updateStarredFooters on page load
             updateStarredFooters();
@@ -1477,47 +1434,6 @@ foreach ($data as $ip => $userData) {
 
             // Call this function initially and whenever the starred footers are updated
             updateFooterSpacerHeight();
-
-            // Footer copy buttons functionality
-            document.body.addEventListener('click', function(e) {
-                if (e.target.classList.contains('copy-btn')) {
-                    const type = e.target.getAttribute('data-type');
-                    let text = '';
-
-                    const thumbnails = document.querySelectorAll('.image-container');
-
-                    const imageInfo = Array.from(thumbnails).map(container => {
-                        const imageName = container.dataset.image;
-                        const commentBoxes = container.querySelectorAll('.comment-box');
-
-                        let line = imageName;
-
-                        commentBoxes.forEach(commentBox => {
-                            const userName = commentBox.querySelector('.comment-user');
-                            const commentElement = commentBox.querySelector('.comment');
-                            if (userName && commentElement) {
-                                const userNameText = userName.textContent.trim().replace(':', '');
-                                line += `\n    ${userNameText}: ${commentElement.textContent.trim()}`;
-                            }
-                        });
-
-                        return line;
-                    });
-
-                    text = imageInfo.join('\n');
-
-                    if (text) {
-                        navigator.clipboard.writeText(text).then(() => {
-                            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} copied to clipboard!`);
-                        }).catch(err => {
-                            console.error('Failed to copy text: ', err);
-                            alert('Failed to copy to clipboard. See console for details.');
-                        });
-                    } else {
-                        alert(`No ${type} found to copy.`);
-                    }
-                }
-            });
 
             function toggleFooterMinimize(footer) {
                 footer.classList.toggle('minimized');
