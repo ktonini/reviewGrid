@@ -69,7 +69,12 @@ if (isset($_POST['toggle_star'])) {
         $data[$user_ip]['starred_images'] = array_values($data[$user_ip]['starred_images']);
     }
 
-    file_put_contents($usersFile, json_encode($data));
+    $result = file_put_contents($usersFile, json_encode($data));
+    if ($result === false) {
+        echo json_encode(['success' => false, 'error' => 'Failed to write to file']);
+    } else {
+        echo json_encode(['success' => true]);
+    }
     exit;
 }
 
@@ -394,7 +399,7 @@ foreach ($data as $ip => $userData) {
             padding: 0.625em;
             background-color: rgba(0, 0, 0, 0.8);
             color: #fff;
-            backdrop-filter: blur(0.625em);
+            backdrop-filter: blur(1em);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -416,6 +421,7 @@ foreach ($data as $ip => $userData) {
         .user-name {
             margin-right: 0.625em;
             flex-shrink: 0;
+            min-width: 5em;
         }
 
         .starred-list-container {
@@ -752,9 +758,17 @@ foreach ($data as $ip => $userData) {
         }
 
         .starred-footer.minimized {
-            padding: 5px 10px;
+            padding: 0.3125em 0.625em;
+        }
+
+        .star-button:focus {
+            outline: none;
         }
     </style>
+    <script>
+        const initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
+        const currentUserIp = '<?php echo $user_ip; ?>';
+    </script>
 </head>
 
 <body>
@@ -1122,6 +1136,28 @@ foreach ($data as $ip => $userData) {
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            function initializeStarredImages() {
+                // Initialize star buttons in the main gallery
+                document.querySelectorAll('.image-container').forEach(container => {
+                    const starButton = container.querySelector('.star-button');
+                    const imageName = container.dataset.image;
+                    const isStarred = initialStarredImages.includes(imageName);
+                    updateStarButton(starButton, isStarred);
+                    container.classList.toggle('starred', isStarred);
+                });
+
+                // Initialize footer
+                updateStarredFooters();
+            }
+
+            function updateStarButton(starButton, isStarred) {
+                starButton.classList.toggle('starred', isStarred);
+                starButton.innerHTML = isStarred ? '★' : '★';
+            }
+
+            // Initialize star buttons and footer
+            initializeStarredImages();
+
             const gallery = document.querySelector('.gallery');
             const modal = document.getElementById('imageModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -1146,14 +1182,21 @@ foreach ($data as $ip => $userData) {
                 }
             });
 
+            let currentImageIndex = 0;
+            let currentFullImagePath = ''; // Declare this variable
+
+
             function openModal(container) {
-                currentImageIndex = images.indexOf(container);
+                currentImageIndex = Array.from(images).indexOf(container);
+                currentFullImagePath = container.dataset.image;
+                console.log('Opening modal with image:', currentFullImagePath); // Add this for debugging
                 updateModal();
                 modal.style.display = 'block';
             }
 
             function navigateModal(direction) {
                 currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+                currentFullImagePath = images[currentImageIndex].dataset.image; // Update the full image path
                 updateModal();
             }
 
@@ -1194,78 +1237,103 @@ foreach ($data as $ip => $userData) {
             function toggleStar(imageContainer) {
                 const starButton = imageContainer.querySelector('.star-button');
                 const imageName = imageContainer.dataset.image;
-                const isStarred = starButton.classList.toggle('starred');
+                const isCurrentlyStarred = starButton.classList.contains('starred');
+                const newStarredState = !isCurrentlyStarred;
 
-                // Update the server-side starred status
-                fetch('toggle_star.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `image=${encodeURIComponent(imageName)}&starred=${isStarred ? 1 : 0}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update the star button appearance
-                        starButton.innerHTML = isStarred ? '★' : '☆';
-                        
-                        // Update the footer lists
-                        updateStarredFooters(imageName, isStarred);
-                    } else {
-                        console.error('Failed to update star status');
-                        // Revert the star button if the server update failed
-                        starButton.classList.toggle('starred');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // Revert the star button if there was an error
-                    starButton.classList.toggle('starred');
-                });
+                updateStarButton(starButton, newStarredState);
+                imageContainer.classList.toggle('starred', newStarredState);
+
+                // Update local state
+                const index = initialStarredImages.indexOf(imageName);
+                if (newStarredState && index === -1) {
+                    initialStarredImages.push(imageName);
+                } else if (!newStarredState && index > -1) {
+                    initialStarredImages.splice(index, 1);
+                }
+
+                // Update the footer lists immediately
+                updateStarredFooters();
+
+                // Update the server-side state
+                fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `toggle_star=${encodeURIComponent(imageName)}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error('Server indicated failure');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // Revert the star state if there was an error
+                        revertStarState(imageContainer, isCurrentlyStarred);
+                        showToast('Failed to update star status. Please try again.');
+                    });
+
+                // Update modal star button if open
+                if (modal.style.display === 'block' && images[currentImageIndex].dataset.image === imageName) {
+                    updateStarButton(modalStarButton, newStarredState);
+                }
             }
 
-            function updateStarredFooters(imageName, isStarred) {
-                const currentUserIp = '<?php echo $user_ip; ?>';
+            function updateStarredFooters() {
                 const footers = document.querySelectorAll('.starred-footer');
-                
+                const currentUserIp = '<?php echo $user_ip; ?>';
+
                 footers.forEach(footer => {
-                    const userIp = footer.dataset.userIp;
-                    const starredList = footer.querySelector('.starred-list');
-                    
-                    if (userIp === currentUserIp) {
-                        if (isStarred) {
-                            // Add the image to the footer
-                            const thumbnail = document.createElement('img');
-                            thumbnail.src = `thumbnails/${imageName}`; // Adjust this path if needed
-                            thumbnail.alt = imageName;
-                            thumbnail.className = 'starred-thumbnail';
-                            thumbnail.dataset.fullImage = `images/${imageName}`; // Adjust this path if needed
+                    if (footer.dataset.userIp === currentUserIp) {
+                        const starredList = footer.querySelector('.starred-list');
+                        starredList.innerHTML = ''; // Clear existing thumbnails
+
+                        initialStarredImages.forEach(imageName => {
+                            const thumbnail = createThumbnail(imageName);
                             starredList.appendChild(thumbnail);
-                        } else {
-                            // Remove the image from the footer
-                            const existingThumbnail = starredList.querySelector(`[data-full-image$="${imageName}"]`);
-                            if (existingThumbnail) {
-                                starredList.removeChild(existingThumbnail);
-                            }
-                        }
+                        });
 
                         // Update footer visibility
                         footer.style.display = starredList.children.length > 0 ? 'flex' : 'none';
-
-                        // Update or add the footer buttons (if needed)
-                        updateFooterButtons(footer);
                     }
                 });
 
-                // Update footer spacer height
                 updateFooterSpacerHeight();
             }
 
-            function updateFooterButtons(footer) {
-                // Implement this function based on your existing button creation code
-                // This function should ensure that the "Download All" and "Copy Names" buttons
-                // are present and properly set up for the footer
+            function createThumbnail(imageName) {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'starred-thumbnail';
+                thumbnail.dataset.fullImage = imageName;
+                thumbnail.innerHTML = `
+                    <img src="${imageName}" alt="${imageName.split('/').pop()}">
+                    <div class="thumbnail-buttons">
+                        <button title="Unstar">★</button>
+                        <button title="Download">⬇️</button>
+                    </div>
+                `;
+                return thumbnail;
+            }
+
+            function revertStarState(imageContainer, originalState) {
+                const starButton = imageContainer.querySelector('.star-button');
+                const imageName = imageContainer.dataset.image;
+
+                updateStarButton(starButton, originalState);
+                imageContainer.classList.toggle('starred', originalState);
+
+                // Update local state
+                const index = initialStarredImages.indexOf(imageName);
+                if (originalState && index === -1) {
+                    initialStarredImages.push(imageName);
+                } else if (!originalState && index > -1) {
+                    initialStarredImages.splice(index, 1);
+                }
+
+                // Update the footer lists
+                updateStarredFooters();
             }
 
             document.body.addEventListener('click', function(e) {
@@ -1286,7 +1354,8 @@ foreach ($data as $ip => $userData) {
                     });
                     downloadAll(starredImages);
                 } else if (e.target.closest('.copy-names-button')) {
-                    // ... existing code ...
+                    const footer = e.target.closest('.starred-footer');
+                    copyImageNames(footer);
                 }
             });
 
@@ -1472,8 +1541,659 @@ foreach ($data as $ip => $userData) {
 
             // Minimize other footers on page load
             minimizeOtherFooters();
+
+            // Add event listener for footer thumbnail buttons
+            document.body.addEventListener('click', function(e) {
+                const thumbnail = e.target.closest('.starred-thumbnail');
+                if (!thumbnail) return;
+
+                const starButton = e.target.closest('.star-button');
+                const downloadButton = e.target.closest('button[title="Download"]');
+
+                if (starButton) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const imageName = thumbnail.dataset.fullImage;
+                    const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                    if (imageContainer) {
+                        toggleStar(imageContainer);
+                    } else {
+                        // If the image is not in the current view, create a temporary container
+                        const tempContainer = document.createElement('div');
+                        tempContainer.className = 'image-container';
+                        tempContainer.dataset.image = imageName;
+                        tempContainer.innerHTML = `
+                <div class="image-title">${imageName.split('/').pop()}</div>
+                <button class="star-button ${starButton.classList.contains('starred') ? 'starred' : ''}">${starButton.textContent}</button>
+            `;
+                        toggleStar(tempContainer);
+                    }
+                } else if (downloadButton) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const imageName = thumbnail.dataset.fullImage;
+                    downloadImage(imageName);
+                } else if (e.target === thumbnail || e.target.tagName === 'IMG') {
+                    // Open modal only if the click was directly on the thumbnail or its image
+                    const imageName = thumbnail.dataset.fullImage;
+                    const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                    if (imageContainer) {
+                        openModal(imageContainer);
+                    } else {
+                        // If the image is not in the current view, create a temporary container
+                        const tempContainer = document.createElement('div');
+                        tempContainer.className = 'image-container';
+                        tempContainer.dataset.image = imageName;
+                        tempContainer.innerHTML = `<div class="image-title">${imageName.split('/').pop()}</div>`;
+                        openModal(tempContainer);
+                    }
+                }
+            });
+
+            function unstarImage(imageName) {
+                const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                if (imageContainer) {
+                    toggleStar(imageContainer);
+                } else {
+                    // If the image is not in the current view, manually update the state
+                    const index = initialStarredImages.indexOf(imageName);
+                    if (index > -1) {
+                        initialStarredImages.splice(index, 1);
+
+                        // Remove the thumbnail from the footer
+                        const footers = document.querySelectorAll('.starred-footer');
+                        footers.forEach(footer => {
+                            const thumbnail = footer.querySelector(`.starred-thumbnail[data-full-image="${imageName}"]`);
+                            if (thumbnail) {
+                                thumbnail.remove();
+                            }
+                        });
+
+                        // Update footer visibility
+                        updateFooterVisibility();
+
+                        // Update server
+                        fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: `toggle_star=${encodeURIComponent(imageName)}`
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (!data.success) {
+                                    throw new Error('Server indicated failure');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                showToast('Failed to update star status. Please try again.');
+                                // If there's an error, add the image back to the starred list
+                                initialStarredImages.push(imageName);
+                                updateStarredFooters();
+                            });
+                    }
+                }
+            }
+
+            // Add this new function to update footer visibility
+            function updateFooterVisibility() {
+                const footers = document.querySelectorAll('.starred-footer');
+                footers.forEach(footer => {
+                    const starredList = footer.querySelector('.starred-list');
+                    footer.style.display = starredList.children.length > 0 ? 'flex' : 'none';
+                });
+                updateFooterSpacerHeight();
+            }
+
+            function downloadImage(imageName) {
+                const link = document.createElement('a');
+                link.href = imageName;
+                link.download = imageName.split('/').pop();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Update the event listener for footer clicks
+            document.body.addEventListener('click', function(e) {
+                const thumbnail = e.target.closest('.starred-thumbnail');
+                if (!thumbnail) return;
+
+                const button = e.target.closest('button');
+                if (button) {
+                    // Handle button clicks as before
+                    const imageName = thumbnail.dataset.fullImage;
+                    if (button.title === 'Unstar') {
+                        unstarImage(imageName);
+                    } else if (button.title === 'Download') {
+                        downloadImage(imageName);
+                    }
+                } else {
+                    // Open modal for the clicked image
+                    const imageName = thumbnail.dataset.fullImage;
+                    const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                    if (imageContainer) {
+                        openModal(imageContainer);
+                    } else {
+                        // If the image is not in the current view, create a temporary container
+                        const tempContainer = document.createElement('div');
+                        tempContainer.className = 'image-container';
+                        tempContainer.dataset.image = imageName;
+                        tempContainer.innerHTML = `<div class="image-title">${imageName.split('/').pop()}</div>`;
+                        openModal(tempContainer);
+                    }
+                }
+            });
+
+            function openModal(container) {
+                currentImageIndex = Array.from(images).indexOf(container);
+                updateModal();
+                modal.style.display = 'block';
+            }
+
+            function updateModal() {
+                const currentImage = images[currentImageIndex];
+                const imageSrc = currentFullImagePath || currentImage.dataset.image; // Use fullImagePath or fallback to dataset
+                const imageTitle = currentImage.querySelector('.image-title').textContent;
+                const isStarred = currentImage.classList.contains('starred');
+
+                const modalImage = document.getElementById('modalImage');
+                modalImage.src = imageSrc;
+                modalImage.alt = imageTitle; // Add alt text for accessibility
+
+                modalTitle.textContent = imageTitle;
+                updateStarButton(modalStarButton, isStarred);
+
+                // Update download button
+                const modalDownloadButton = document.getElementById('modalDownloadButton');
+                modalDownloadButton.href = imageSrc;
+                modalDownloadButton.download = imageSrc.split('/').pop();
+
+                // Update comment if exists
+                const commentBox = currentImage.querySelector('.comment-box');
+                const modalCommentBox = document.getElementById('modalCommentBox');
+                const modalCommentPlaceholder = document.getElementById('modalCommentPlaceholder');
+
+                if (commentBox && commentBox.textContent.trim()) {
+                    modalCommentBox.innerHTML = commentBox.innerHTML;
+                    modalCommentBox.style.display = 'block';
+                    modalCommentPlaceholder.style.display = 'none';
+                } else {
+                    modalCommentBox.style.display = 'none';
+                    modalCommentPlaceholder.style.display = 'block';
+                }
+
+                console.log('Modal updated with image:', imageSrc); // Add this for debugging
+            }
         });
     </script>
+</body>
+document.addEventListener('DOMContentLoaded', function() {
+function initializeStarredImages() {
+// Initialize star buttons in the main gallery
+document.querySelectorAll('.image-container').forEach(container => {
+const starButton = container.querySelector('.star-button');
+const imageName = container.dataset.image;
+const isStarred = initialStarredImages.includes(imageName);
+updateStarButton(starButton, isStarred);
+container.classList.toggle('starred', isStarred);
+});
+
+// Initialize footer
+updateStarredFooters();
+}
+
+function updateStarButton(starButton, isStarred) {
+starButton.classList.toggle('starred', isStarred);
+starButton.innerHTML = isStarred ? '★' : '☆';
+}
+
+// Initialize star buttons and footer
+initializeStarredImages();
+
+const gallery = document.querySelector('.gallery');
+const modal = document.getElementById('imageModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalStarButton = document.getElementById('modalStarButton');
+const modalDownloadButton = document.getElementById('modalDownloadButton');
+const closeBtn = document.querySelector('.close');
+const prevBtn = document.querySelector('.prev');
+const nextBtn = document.querySelector('.next');
+const starredFootersContainer = document.getElementById('starred-footers-container');
+const starredFooters = starredFootersContainer.querySelectorAll('.starred-footer');
+
+gallery.addEventListener('click', function(e) {
+const container = e.target.closest('.image-container');
+if (!container) return;
+
+if (e.target.tagName === 'IMG') {
+openModal(container);
+} else if (e.target.classList.contains('star-button')) {
+toggleStar(container);
+} else if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
+editComment(container);
+}
+});
+
+function openModal(container) {
+currentImageIndex = images.indexOf(container);
+updateModal();
+modal.style.display = 'block';
+}
+
+function navigateModal(direction) {
+currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+updateModal();
+}
+
+closeBtn.onclick = function() {
+modal.style.display = 'none';
+}
+
+prevBtn.onclick = function() {
+navigateModal(-1);
+}
+
+nextBtn.onclick = function() {
+navigateModal(1);
+}
+
+modalStarButton.onclick = function() {
+toggleStar(images[currentImageIndex]);
+}
+
+window.onclick = function(e) {
+if (e.target == modal) {
+modal.style.display = 'none';
+}
+}
+
+document.addEventListener('keydown', function(e) {
+if (modal.style.display === 'block') {
+if (e.key === 'ArrowLeft') {
+navigateModal(-1);
+} else if (e.key === 'ArrowRight') {
+navigateModal(1);
+} else if (e.key === 'Escape') {
+modal.style.display = 'none';
+}
+}
+});
+
+function toggleStar(imageContainer) {
+const starButton = imageContainer.querySelector('.star-button');
+const imageName = imageContainer.dataset.image;
+const isCurrentlyStarred = starButton.classList.contains('starred');
+const newStarredState = !isCurrentlyStarred;
+
+updateStarButton(starButton, newStarredState);
+imageContainer.classList.toggle('starred', newStarredState);
+
+// Update local state
+if (newStarredState) {
+if (!initialStarredImages.includes(imageName)) {
+initialStarredImages.push(imageName);
+}
+} else {
+const index = initialStarredImages.indexOf(imageName);
+if (index > -1) {
+initialStarredImages.splice(index, 1);
+}
+}
+
+// Update the footer lists immediately
+updateStarredFooters();
+
+// Update the server-side state
+fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/x-www-form-urlencoded',
+},
+body: `toggle_star=${encodeURIComponent(imageName)}`
+})
+.then(response => {
+if (!response.ok) {
+throw new Error(`HTTP error! status: ${response.status}`);
+}
+return response.json();
+})
+.then(data => {
+if (!data.success) {
+throw new Error('Server indicated failure');
+}
+})
+.catch(error => {
+console.error('Error:', error);
+// Revert the star state if there was an error
+revertStarState(imageContainer, isCurrentlyStarred);
+showToast('Failed to update star status. Please try again.');
+});
+}
+
+function updateStarredFooters() {
+const footers = document.querySelectorAll('.starred-footer');
+
+footers.forEach(footer => {
+if (footer.dataset.userIp === currentUserIp) {
+const starredList = footer.querySelector('.starred-list');
+
+// Clear existing thumbnails
+starredList.innerHTML = '';
+
+// Add thumbnails for all starred images
+initialStarredImages.forEach(imageName => {
+const thumbnail = createThumbnail(imageName);
+starredList.appendChild(thumbnail);
+});
+
+// Update footer visibility
+footer.style.display = starredList.children.length > 0 ? 'flex' : 'none';
+}
+});
+
+// Update footer spacer height
+updateFooterSpacerHeight();
+}
+
+function createThumbnail(imageName) {
+const thumbnail = document.createElement('div');
+thumbnail.className = 'starred-thumbnail';
+thumbnail.dataset.fullImage = imageName;
+thumbnail.innerHTML = `
+<img src="${imageName}" alt="${imageName.split('/').pop()}">
+<div class="thumbnail-buttons">
+    <button class="star-button starred" title="Unstar">★</button>
+    <button title="Download">⬇️</button>
+</div>
+`;
+return thumbnail;
+}
+
+function revertStarState(imageContainer, originalState) {
+const starButton = imageContainer.querySelector('.star-button');
+const imageName = imageContainer.dataset.image;
+
+updateStarButton(starButton, originalState);
+imageContainer.classList.toggle('starred', originalState);
+
+// Update local state
+const index = initialStarredImages.indexOf(imageName);
+if (originalState && index === -1) {
+initialStarredImages.push(imageName);
+} else if (!originalState && index > -1) {
+initialStarredImages.splice(index, 1);
+}
+
+// Update the footer lists
+updateStarredFooters();
+}
+
+document.body.addEventListener('click', function(e) {
+if (e.target.closest('.download-all-button')) {
+e.preventDefault();
+const footer = e.target.closest('.starred-footer');
+const starredImages = Array.from(footer.querySelectorAll('.starred-thumbnail')).map(thumb => {
+let imagePath = thumb.dataset.fullImage;
+console.log('Original image path:', imagePath);
+
+// Remove leading slashes
+imagePath = imagePath.replace(/^\/+/, '');
+
+// Construct the full URL
+const fullUrl = new URL(imagePath, window.location.origin + '/').href;
+console.log('Full URL:', fullUrl);
+return fullUrl;
+});
+downloadAll(starredImages);
+} else if (e.target.closest('.copy-names-button')) {
+const footer = e.target.closest('.starred-footer');
+copyImageNames(footer);
+}
+});
+
+function downloadAll(urls) {
+urls.forEach((url, index) => {
+console.log('Attempting to download:', url);
+setTimeout(() => {
+fetch(url)
+.then(response => {
+if (!response.ok) {
+throw new Error(`HTTP error! status: ${response.status}`);
+}
+return response.blob();
+})
+.then(blob => {
+const link = document.createElement('a');
+link.href = URL.createObjectURL(blob);
+link.download = url.split('/').pop();
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+URL.revokeObjectURL(link.href);
+})
+.catch(error => console.error('Download failed:', url, error));
+}, index * 1000);
+});
+}
+
+function copyImageNames(footer) {
+const starredList = footer.querySelector('.starred-list');
+const thumbnails = starredList.querySelectorAll('.starred-thumbnail');
+const imageInfo = Array.from(thumbnails).map(thumb => {
+const fullImage = thumb.dataset.fullImage;
+const imageName = fullImage.split('/').pop();
+const commentBoxes = document.querySelectorAll(`.image-container[data-image="${imageName}"] .comment-box`);
+const comments = Array.from(commentBoxes).map(box => {
+const userName = box.querySelector('.comment-user').textContent.trim().replace(':', '');
+const comment = box.querySelector('.comment').textContent.trim();
+return `${userName}: ${comment}`;
+});
+return `${imageName}${comments.length > 0 ? '\n ' + comments.join('\n ') : ''}`;
+});
+const infoText = imageInfo.join('\n');
+
+navigator.clipboard.writeText(infoText).then(function() {
+showToast('Image filenames and comments copied to clipboard!');
+}, function(err) {
+console.error('Could not copy text: ', err);
+showToast('Failed to copy image filenames and comments.');
+});
+}
+
+// Call updateStarredFooters on page load
+updateStarredFooters();
+
+function makeNameEditable(nameSpan) {
+console.log('makeNameEditable called');
+const currentName = nameSpan.textContent;
+const input = document.createElement('input');
+input.type = 'text';
+input.value = currentName;
+input.className = 'user-name-input';
+
+function saveNameChange() {
+const newName = input.value.trim();
+fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/x-www-form-urlencoded',
+},
+body: `update_name=${encodeURIComponent(newName)}`
+})
+.then(response => response.json())
+.then(result => {
+if (result.success) {
+updateAllUserNames(result.name);
+showToast('Name updated successfully!');
+} else {
+throw new Error(result.error || 'Failed to update name.');
+}
+})
+.catch(error => {
+console.error('Error updating name:', error);
+showToast(error.message);
+updateAllUserNames(currentName);
+})
+.finally(() => {
+nameSpan.classList.remove('editing');
+input.remove(); // Remove the input field
+});
+}
+
+input.addEventListener('blur', saveNameChange);
+input.addEventListener('keypress', function(e) {
+if (e.key === 'Enter') {
+this.blur();
+}
+});
+
+nameSpan.classList.add('editing');
+nameSpan.parentNode.insertBefore(input, nameSpan);
+input.focus();
+}
+
+// Updated function to update only the current user's name
+function updateAllUserNames(newName) {
+const currentUserIp = '<?php echo $user_ip; ?>';
+const userNameElements = document.querySelectorAll(`.user-name[data-user-ip="${currentUserIp}"]`);
+userNameElements.forEach(el => {
+el.textContent = newName;
+});
+
+// Update comment user names
+const commentUserElements = document.querySelectorAll(`.comment-user[data-user-ip="${currentUserIp}"]`);
+commentUserElements.forEach(el => {
+el.textContent = newName + ':';
+});
+
+// Update the top user name
+const topUserName = document.getElementById('top-user-name');
+if (topUserName) {
+topUserName.textContent = newName;
+}
+
+// Update the footer user name
+const footerUserName = document.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"] .user-name`);
+if (footerUserName) {
+footerUserName.textContent = newName;
+}
+
+console.log('Updated all user names to:', newName);
+}
+
+// Add click event listener to the top user name
+const topUserName = document.getElementById('top-user-name');
+topUserName.addEventListener('click', function() {
+makeNameEditable(this);
+});
+
+// Add this function to update the footer spacer height
+function updateFooterSpacerHeight() {
+const footerHeight = document.getElementById('starred-footers-container').offsetHeight;
+document.getElementById('footer-spacer').style.height = footerHeight + 'px';
+}
+
+// Call this function initially and whenever the starred footers are updated
+updateFooterSpacerHeight();
+
+function toggleFooterMinimize(footer) {
+footer.classList.toggle('minimized');
+const minimizeButton = footer.querySelector('.minimize-button');
+if (footer.classList.contains('minimized')) {
+minimizeButton.textContent = '▼';
+minimizeButton.title = 'Maximize';
+} else {
+minimizeButton.textContent = '▲';
+minimizeButton.title = 'Minimize';
+}
+updateFooterSpacerHeight();
+}
+
+function minimizeOtherFooters() {
+const currentUserIp = '<?php echo $user_ip; ?>';
+const footers = document.querySelectorAll('.starred-footer');
+footers.forEach(footer => {
+if (footer.dataset.userIp !== currentUserIp) {
+footer.classList.add('minimized');
+const minimizeButton = footer.querySelector('.minimize-button');
+minimizeButton.textContent = '▼';
+minimizeButton.title = 'Maximize';
+}
+});
+updateFooterSpacerHeight();
+}
+
+// Add click event listener for minimize buttons
+document.body.addEventListener('click', function(e) {
+if (e.target.classList.contains('minimize-button')) {
+const footer = e.target.closest('.starred-footer');
+toggleFooterMinimize(footer);
+}
+});
+
+// Minimize other footers on page load
+minimizeOtherFooters();
+
+// Add event listener for footer thumbnail buttons
+document.body.addEventListener('click', function(e) {
+const button = e.target.closest('.starred-thumbnail button');
+if (!button) return;
+
+const thumbnail = button.closest('.starred-thumbnail');
+const imageName = thumbnail.dataset.fullImage;
+
+if (button.title === 'Unstar') {
+unstarImage(imageName);
+} else if (button.title === 'Download') {
+downloadImage(imageName);
+}
+});
+
+function unstarImage(imageName) {
+const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+if (imageContainer) {
+toggleStar(imageContainer);
+} else {
+// If the image is not in the current view, manually update the state
+const index = initialStarredImages.indexOf(imageName);
+if (index > -1) {
+initialStarredImages.splice(index, 1);
+updateStarredFooters();
+// Update server
+fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/x-www-form-urlencoded',
+},
+body: `toggle_star=${encodeURIComponent(imageName)}`
+})
+.then(response => response.json())
+.then(data => {
+if (!data.success) {
+throw new Error('Server indicated failure');
+}
+})
+.catch(error => {
+console.error('Error:', error);
+showToast('Failed to update star status. Please try again.');
+});
+}
+}
+}
+
+function downloadImage(imageName) {
+const link = document.createElement('a');
+link.href = imageName;
+link.download = imageName.split('/').pop();
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+}
+});
+</script>
 </body>
 
 </html>
