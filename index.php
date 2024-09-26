@@ -206,7 +206,6 @@ foreach ($data as $ip => $userData) {
             color: var(--text-color);
             background-color: var(--bg-color);
             margin: 0;
-            padding: 1.25em;
             padding-bottom: 3.75em;
             padding-top: 1.25em;
         }
@@ -391,6 +390,7 @@ foreach ($data as $ip => $userData) {
             flex-direction: column;
             max-height: 50vh;
             overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
         }
 
         .starred-footer {
@@ -419,7 +419,6 @@ foreach ($data as $ip => $userData) {
         }
 
         .user-name {
-            margin-right: 0.625em;
             flex-shrink: 0;
             min-width: 5em;
         }
@@ -764,6 +763,58 @@ foreach ($data as $ip => $userData) {
         .star-button:focus {
             outline: none;
         }
+
+
+        #top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5em;
+        background-color: rgba(44, 44, 44, 0.8); /* Matching the footer background color */
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 1000;
+        box-shadow: 0 20px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    #logo-container, #user-name-container {
+        flex: 0 0 auto;
+    }
+
+    #logo-container svg {
+        fill: var(--text-color);
+        transition: fill 0.3s ease;
+    }
+
+    #logo-container:hover svg {
+        fill: var(--star-color);
+    }
+
+    #page-title {
+        flex: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 1.5em;
+        color: var(--text-color);
+    }
+
+    #top-user-name {
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    #top-user-name:hover {
+        color: var(--star-color);
+    }
+
+    /* Add some padding to the body to account for the fixed top bar */
+    body {
+        padding-top: 60px; /* Adjust this value based on the height of your top bar */
+    }
     </style>
     <script>
         const initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
@@ -943,12 +994,22 @@ foreach ($data as $ip => $userData) {
         }
     </script>
 
-    <!-- Rest of your HTML content -->
-
-    <h1><?php echo $title; ?></h1>
-    <!-- Add this new div for the user name in the top right -->
-    <div id="user-name-container" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
-        <span id="top-user-name" class="user-name editable" data-user-ip="<?php echo $user_ip; ?>"><?php echo htmlspecialchars($data[$user_ip]['name']); ?></span>
+    <div id="top-bar">
+        <div id="logo-container">
+            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                viewBox="0 0 153.16 144.09" style="enable-background:new 0 0 153.16 144.09;" xml:space="preserve" width="40" height="40">
+                <g>
+                    <path d="M153.16,0v21.8H22.6v122.29H0V0H153.16z" />
+                </g>
+                <g>
+                    <path d="M45.6,43.8h107v21.8H68.2V122h62.6v-18H92.4V82h60.2v61.8h-21.8H45.6V43.8z" />
+                </g>
+            </svg>
+        </div>
+        <h1 id="page-title"><?php echo htmlspecialchars($title); ?></h1>
+        <div id="user-name-container">
+            <span id="top-user-name" class="user-name editable" data-user-ip="<?php echo $user_ip; ?>"><?php echo htmlspecialchars($data[$user_ip]['name']); ?></span>
+        </div>
     </div>
     <div class="gallery">
         <?php
@@ -1234,6 +1295,18 @@ foreach ($data as $ip => $userData) {
                 }
             });
 
+        // Add click event listener to the logo
+        const logo = document.querySelector('#logo-container svg');
+        logo.addEventListener('click', function() {
+            window.location.href = '/'; // Redirect to home page
+        });
+
+        // Add click event listener to the top user name
+        const topUserName = document.getElementById('top-user-name');
+        topUserName.addEventListener('click', function() {
+            makeNameEditable(this);
+        });
+
             function toggleStar(imageContainer) {
                 const starButton = imageContainer.querySelector('.star-button');
                 const imageName = imageContainer.dataset.image;
@@ -1489,12 +1562,6 @@ foreach ($data as $ip => $userData) {
                 console.log('Updated all user names to:', newName);
             }
 
-            // Add click event listener to the top user name
-            const topUserName = document.getElementById('top-user-name');
-            topUserName.addEventListener('click', function() {
-                makeNameEditable(this);
-            });
-
             // Add this function to update the footer spacer height
             function updateFooterSpacerHeight() {
                 const footerHeight = document.getElementById('starred-footers-container').offsetHeight;
@@ -1729,471 +1796,6 @@ foreach ($data as $ip => $userData) {
             }
         });
     </script>
-</body>
-document.addEventListener('DOMContentLoaded', function() {
-function initializeStarredImages() {
-// Initialize star buttons in the main gallery
-document.querySelectorAll('.image-container').forEach(container => {
-const starButton = container.querySelector('.star-button');
-const imageName = container.dataset.image;
-const isStarred = initialStarredImages.includes(imageName);
-updateStarButton(starButton, isStarred);
-container.classList.toggle('starred', isStarred);
-});
-
-// Initialize footer
-updateStarredFooters();
-}
-
-function updateStarButton(starButton, isStarred) {
-starButton.classList.toggle('starred', isStarred);
-starButton.innerHTML = isStarred ? '★' : '☆';
-}
-
-// Initialize star buttons and footer
-initializeStarredImages();
-
-const gallery = document.querySelector('.gallery');
-const modal = document.getElementById('imageModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalStarButton = document.getElementById('modalStarButton');
-const modalDownloadButton = document.getElementById('modalDownloadButton');
-const closeBtn = document.querySelector('.close');
-const prevBtn = document.querySelector('.prev');
-const nextBtn = document.querySelector('.next');
-const starredFootersContainer = document.getElementById('starred-footers-container');
-const starredFooters = starredFootersContainer.querySelectorAll('.starred-footer');
-
-gallery.addEventListener('click', function(e) {
-const container = e.target.closest('.image-container');
-if (!container) return;
-
-if (e.target.tagName === 'IMG') {
-openModal(container);
-} else if (e.target.classList.contains('star-button')) {
-toggleStar(container);
-} else if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
-editComment(container);
-}
-});
-
-function openModal(container) {
-currentImageIndex = images.indexOf(container);
-updateModal();
-modal.style.display = 'block';
-}
-
-function navigateModal(direction) {
-currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
-updateModal();
-}
-
-closeBtn.onclick = function() {
-modal.style.display = 'none';
-}
-
-prevBtn.onclick = function() {
-navigateModal(-1);
-}
-
-nextBtn.onclick = function() {
-navigateModal(1);
-}
-
-modalStarButton.onclick = function() {
-toggleStar(images[currentImageIndex]);
-}
-
-window.onclick = function(e) {
-if (e.target == modal) {
-modal.style.display = 'none';
-}
-}
-
-document.addEventListener('keydown', function(e) {
-if (modal.style.display === 'block') {
-if (e.key === 'ArrowLeft') {
-navigateModal(-1);
-} else if (e.key === 'ArrowRight') {
-navigateModal(1);
-} else if (e.key === 'Escape') {
-modal.style.display = 'none';
-}
-}
-});
-
-function toggleStar(imageContainer) {
-const starButton = imageContainer.querySelector('.star-button');
-const imageName = imageContainer.dataset.image;
-const isCurrentlyStarred = starButton.classList.contains('starred');
-const newStarredState = !isCurrentlyStarred;
-
-updateStarButton(starButton, newStarredState);
-imageContainer.classList.toggle('starred', newStarredState);
-
-// Update local state
-if (newStarredState) {
-if (!initialStarredImages.includes(imageName)) {
-initialStarredImages.push(imageName);
-}
-} else {
-const index = initialStarredImages.indexOf(imageName);
-if (index > -1) {
-initialStarredImages.splice(index, 1);
-}
-}
-
-// Update the footer lists immediately
-updateStarredFooters();
-
-// Update the server-side state
-fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/x-www-form-urlencoded',
-},
-body: `toggle_star=${encodeURIComponent(imageName)}`
-})
-.then(response => {
-if (!response.ok) {
-throw new Error(`HTTP error! status: ${response.status}`);
-}
-return response.json();
-})
-.then(data => {
-if (!data.success) {
-throw new Error('Server indicated failure');
-}
-})
-.catch(error => {
-console.error('Error:', error);
-// Revert the star state if there was an error
-revertStarState(imageContainer, isCurrentlyStarred);
-showToast('Failed to update star status. Please try again.');
-});
-}
-
-function updateStarredFooters() {
-const footers = document.querySelectorAll('.starred-footer');
-
-footers.forEach(footer => {
-if (footer.dataset.userIp === currentUserIp) {
-const starredList = footer.querySelector('.starred-list');
-
-// Clear existing thumbnails
-starredList.innerHTML = '';
-
-// Add thumbnails for all starred images
-initialStarredImages.forEach(imageName => {
-const thumbnail = createThumbnail(imageName);
-starredList.appendChild(thumbnail);
-});
-
-// Update footer visibility
-footer.style.display = starredList.children.length > 0 ? 'flex' : 'none';
-}
-});
-
-// Update footer spacer height
-updateFooterSpacerHeight();
-}
-
-function createThumbnail(imageName) {
-const thumbnail = document.createElement('div');
-thumbnail.className = 'starred-thumbnail';
-thumbnail.dataset.fullImage = imageName;
-thumbnail.innerHTML = `
-<img src="${imageName}" alt="${imageName.split('/').pop()}">
-<div class="thumbnail-buttons">
-    <button class="star-button starred" title="Unstar">★</button>
-    <button title="Download">⬇️</button>
-</div>
-`;
-return thumbnail;
-}
-
-function revertStarState(imageContainer, originalState) {
-const starButton = imageContainer.querySelector('.star-button');
-const imageName = imageContainer.dataset.image;
-
-updateStarButton(starButton, originalState);
-imageContainer.classList.toggle('starred', originalState);
-
-// Update local state
-const index = initialStarredImages.indexOf(imageName);
-if (originalState && index === -1) {
-initialStarredImages.push(imageName);
-} else if (!originalState && index > -1) {
-initialStarredImages.splice(index, 1);
-}
-
-// Update the footer lists
-updateStarredFooters();
-}
-
-document.body.addEventListener('click', function(e) {
-if (e.target.closest('.download-all-button')) {
-e.preventDefault();
-const footer = e.target.closest('.starred-footer');
-const starredImages = Array.from(footer.querySelectorAll('.starred-thumbnail')).map(thumb => {
-let imagePath = thumb.dataset.fullImage;
-console.log('Original image path:', imagePath);
-
-// Remove leading slashes
-imagePath = imagePath.replace(/^\/+/, '');
-
-// Construct the full URL
-const fullUrl = new URL(imagePath, window.location.origin + '/').href;
-console.log('Full URL:', fullUrl);
-return fullUrl;
-});
-downloadAll(starredImages);
-} else if (e.target.closest('.copy-names-button')) {
-const footer = e.target.closest('.starred-footer');
-copyImageNames(footer);
-}
-});
-
-function downloadAll(urls) {
-urls.forEach((url, index) => {
-console.log('Attempting to download:', url);
-setTimeout(() => {
-fetch(url)
-.then(response => {
-if (!response.ok) {
-throw new Error(`HTTP error! status: ${response.status}`);
-}
-return response.blob();
-})
-.then(blob => {
-const link = document.createElement('a');
-link.href = URL.createObjectURL(blob);
-link.download = url.split('/').pop();
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-URL.revokeObjectURL(link.href);
-})
-.catch(error => console.error('Download failed:', url, error));
-}, index * 1000);
-});
-}
-
-function copyImageNames(footer) {
-const starredList = footer.querySelector('.starred-list');
-const thumbnails = starredList.querySelectorAll('.starred-thumbnail');
-const imageInfo = Array.from(thumbnails).map(thumb => {
-const fullImage = thumb.dataset.fullImage;
-const imageName = fullImage.split('/').pop();
-const commentBoxes = document.querySelectorAll(`.image-container[data-image="${imageName}"] .comment-box`);
-const comments = Array.from(commentBoxes).map(box => {
-const userName = box.querySelector('.comment-user').textContent.trim().replace(':', '');
-const comment = box.querySelector('.comment').textContent.trim();
-return `${userName}: ${comment}`;
-});
-return `${imageName}${comments.length > 0 ? '\n ' + comments.join('\n ') : ''}`;
-});
-const infoText = imageInfo.join('\n');
-
-navigator.clipboard.writeText(infoText).then(function() {
-showToast('Image filenames and comments copied to clipboard!');
-}, function(err) {
-console.error('Could not copy text: ', err);
-showToast('Failed to copy image filenames and comments.');
-});
-}
-
-// Call updateStarredFooters on page load
-updateStarredFooters();
-
-function makeNameEditable(nameSpan) {
-console.log('makeNameEditable called');
-const currentName = nameSpan.textContent;
-const input = document.createElement('input');
-input.type = 'text';
-input.value = currentName;
-input.className = 'user-name-input';
-
-function saveNameChange() {
-const newName = input.value.trim();
-fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/x-www-form-urlencoded',
-},
-body: `update_name=${encodeURIComponent(newName)}`
-})
-.then(response => response.json())
-.then(result => {
-if (result.success) {
-updateAllUserNames(result.name);
-showToast('Name updated successfully!');
-} else {
-throw new Error(result.error || 'Failed to update name.');
-}
-})
-.catch(error => {
-console.error('Error updating name:', error);
-showToast(error.message);
-updateAllUserNames(currentName);
-})
-.finally(() => {
-nameSpan.classList.remove('editing');
-input.remove(); // Remove the input field
-});
-}
-
-input.addEventListener('blur', saveNameChange);
-input.addEventListener('keypress', function(e) {
-if (e.key === 'Enter') {
-this.blur();
-}
-});
-
-nameSpan.classList.add('editing');
-nameSpan.parentNode.insertBefore(input, nameSpan);
-input.focus();
-}
-
-// Updated function to update only the current user's name
-function updateAllUserNames(newName) {
-const currentUserIp = '<?php echo $user_ip; ?>';
-const userNameElements = document.querySelectorAll(`.user-name[data-user-ip="${currentUserIp}"]`);
-userNameElements.forEach(el => {
-el.textContent = newName;
-});
-
-// Update comment user names
-const commentUserElements = document.querySelectorAll(`.comment-user[data-user-ip="${currentUserIp}"]`);
-commentUserElements.forEach(el => {
-el.textContent = newName + ':';
-});
-
-// Update the top user name
-const topUserName = document.getElementById('top-user-name');
-if (topUserName) {
-topUserName.textContent = newName;
-}
-
-// Update the footer user name
-const footerUserName = document.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"] .user-name`);
-if (footerUserName) {
-footerUserName.textContent = newName;
-}
-
-console.log('Updated all user names to:', newName);
-}
-
-// Add click event listener to the top user name
-const topUserName = document.getElementById('top-user-name');
-topUserName.addEventListener('click', function() {
-makeNameEditable(this);
-});
-
-// Add this function to update the footer spacer height
-function updateFooterSpacerHeight() {
-const footerHeight = document.getElementById('starred-footers-container').offsetHeight;
-document.getElementById('footer-spacer').style.height = footerHeight + 'px';
-}
-
-// Call this function initially and whenever the starred footers are updated
-updateFooterSpacerHeight();
-
-function toggleFooterMinimize(footer) {
-footer.classList.toggle('minimized');
-const minimizeButton = footer.querySelector('.minimize-button');
-if (footer.classList.contains('minimized')) {
-minimizeButton.textContent = '▼';
-minimizeButton.title = 'Maximize';
-} else {
-minimizeButton.textContent = '▲';
-minimizeButton.title = 'Minimize';
-}
-updateFooterSpacerHeight();
-}
-
-function minimizeOtherFooters() {
-const currentUserIp = '<?php echo $user_ip; ?>';
-const footers = document.querySelectorAll('.starred-footer');
-footers.forEach(footer => {
-if (footer.dataset.userIp !== currentUserIp) {
-footer.classList.add('minimized');
-const minimizeButton = footer.querySelector('.minimize-button');
-minimizeButton.textContent = '▼';
-minimizeButton.title = 'Maximize';
-}
-});
-updateFooterSpacerHeight();
-}
-
-// Add click event listener for minimize buttons
-document.body.addEventListener('click', function(e) {
-if (e.target.classList.contains('minimize-button')) {
-const footer = e.target.closest('.starred-footer');
-toggleFooterMinimize(footer);
-}
-});
-
-// Minimize other footers on page load
-minimizeOtherFooters();
-
-// Add event listener for footer thumbnail buttons
-document.body.addEventListener('click', function(e) {
-const button = e.target.closest('.starred-thumbnail button');
-if (!button) return;
-
-const thumbnail = button.closest('.starred-thumbnail');
-const imageName = thumbnail.dataset.fullImage;
-
-if (button.title === 'Unstar') {
-unstarImage(imageName);
-} else if (button.title === 'Download') {
-downloadImage(imageName);
-}
-});
-
-function unstarImage(imageName) {
-const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
-if (imageContainer) {
-toggleStar(imageContainer);
-} else {
-// If the image is not in the current view, manually update the state
-const index = initialStarredImages.indexOf(imageName);
-if (index > -1) {
-initialStarredImages.splice(index, 1);
-updateStarredFooters();
-// Update server
-fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/x-www-form-urlencoded',
-},
-body: `toggle_star=${encodeURIComponent(imageName)}`
-})
-.then(response => response.json())
-.then(data => {
-if (!data.success) {
-throw new Error('Server indicated failure');
-}
-})
-.catch(error => {
-console.error('Error:', error);
-showToast('Failed to update star status. Please try again.');
-});
-}
-}
-}
-
-function downloadImage(imageName) {
-const link = document.createElement('a');
-link.href = imageName;
-link.download = imageName.split('/').pop();
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-}
-});
-</script>
 </body>
 
 </html>
