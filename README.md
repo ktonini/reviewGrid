@@ -1,16 +1,20 @@
 # ReviewGrid
 
-ReviewGrid is a PHP-based image gallery application that allows users to view, comment on, and star images. It features a unique user identification system based on IP addresses.
+ReviewGrid is a lightweight, single-file PHP application designed for quick and easy image gallery creation. It's built to be ephemeral and portable, allowing users to instantly create an interactive gallery from any folder of images.
+
 
 ## Features
 
-- Image gallery with responsive grid layout
-- Modal view for individual images
-- Commenting system for images
-- Star/unstar functionality for favorite images
-- Download option for images
-- Responsive design for various screen sizes
-- User identification and assignment based on IP address allows for persistent user actions (comments, stars) without login
+- Minimal setup: Just place the PHP file in any directory with images
+- Self-contained: All generated data is stored within a `_data` folder for easy management
+- Instant gallery creation: Automatically generates a gallery from images in the directory
+- JSON-based data storage: Uses a simple JSON file as a lightweight database
+- User identification by IP: Allows for persistent user actions without login
+- Interactive features: Commenting and starring functionality
+- Responsive design: Adapts to various screen sizes for optimal viewing
+- Easy cleanup: Remove the PHP file and `_data` folder to revert to the original image directory
+
+ReviewGrid is perfect for quickly sharing and reviewing sets of images, whether for personal use, client presentations, or collaborative projects. Its self-contained nature means you can easily move, copy, or delete the gallery without complex setup or teardown procedures.
 
 ## Installation
 
