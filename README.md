@@ -1,60 +1,57 @@
-# reviewGrid
+# ReviewGrid
 
-reviewGrid is a simple, PHP-based image gallery with review features. It allows users to view, star, and download images in a responsive grid layout.
+ReviewGrid is a PHP-based image gallery application that allows users to view, comment on, and star images. It features a unique user identification system based on IP addresses.
 
 ## Features
 
-- Responsive grid layout for image display
-- Image starring functionality
-- Full-size image viewing in a modal
-- Download functionality for individual images
-- Thumbnail generation for faster loading
-- Persistent storage of starred images
-- Copy filenames of starred images
-
-## Requirements
-
-- PHP 7.2 or higher
-- GD Library for PHP (for thumbnail generation)
-- Web server (e.g., Apache, Nginx)
+- Image gallery with responsive grid layout
+- Modal view for individual images
+- Commenting system for images
+- Star/unstar functionality for favorite images
+- Download option for images
+- Responsive design for various screen sizes
+- User identification and assignment based on IP address
+  - Allows for persistent user actions (comments, stars) without login
+  - Supports multiple users on shared networks
 
 ## Installation
 
 1. Clone the repository:
-`git clone https://github.com/ktonini/reviewGrid.git`
-
-2. Ensure your web server is configured to serve PHP files.
-
-3. Place your images in the root directory of the project.
-
-4. Make sure the `_data` directory and its subdirectories are writable by the web server:
-`chmod -R 755 _data`
-
-5. Access the gallery through your web browser (e.g., `http://localhost/reviewGrid`).
+   ```
+   git clone https://github.com/ktonini/reviewGrid.git
+   ```
+2. Ensure you have PHP installed on your server.
+3. Place your images in the `_data/images/` directory.
+4. Configure your web server to serve the project directory.
 
 ## Usage
 
-- Click on an image to view it in full size.
-- Use the star button to mark favorite images.
-- Use the download button to save individual images.
-- Navigate through images in the full-size view using arrow keys or on-screen arrows.
-- Use the "Copy Names" button in the footer to copy the filenames of all starred images.
+1. Open the application in a web browser.
+2. Browse through the image gallery.
+3. Click on an image to open it in a modal view.
+4. Use the star button to mark favorite images.
+5. Add or edit comments on images.
+6. Use the download button to save images locally.
 
-## Customization
+Note: Your actions (comments, stars) are associated with your IP address and will persist across sessions.
 
-You can customize the gallery by modifying the following in `index.php`:
+## File Structure
 
-- `$thumbWidth` and `$thumbHeight`: Change thumbnail dimensions
-- CSS styles: Modify the appearance of the gallery
+- `index.php`: Main application file
+- `_data/`: Directory for storing image data
+  - `images/`: Contains all gallery images
+  - `thumbs/`: Contains thumbnail versions of images
+  - `data.json`: Stores image metadata, user interactions, and IP-based user data
 
-## Contributing
+## Configuration
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+The `.gitignore` file is set up to ignore all files except for:
+- `.gitignore`
+- `index.php`
+- `_data/` directory (excluding `thumbs/*` and `starred_images.txt`)
 
-<!-- ## License
+## User Identification
 
-This project is open source and available under the [MIT License](LICENSE).
-
-## Author
-
-Keith Tonini -->
+ReviewGrid uses IP addresses to identify users:
+- Each unique IP address is treated as a separate user
+- This allows for persistent actions without requiring user accounts
