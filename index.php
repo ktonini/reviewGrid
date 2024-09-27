@@ -493,6 +493,9 @@ foreach ($data as $ip => $userData) {
 
         .user-name {
             flex-shrink: 0;
+        }
+
+        .starred-footer-header {
             min-width: 5em;
         }
 
@@ -953,7 +956,8 @@ foreach ($data as $ip => $userData) {
             let imageName, imageContainer, starButton;
 
             if (typeof imageContainerOrName === 'string') {
-                imageName = imageContainerOrName;
+                // Remove leading slash if present (for modal view)
+                imageName = imageContainerOrName.replace(/^\//, '');
                 imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
                 starButton = imageContainer ? imageContainer.querySelector('.star-button') : modalStarButton;
             } else {
@@ -1030,9 +1034,9 @@ foreach ($data as $ip => $userData) {
             commentBox.className = 'comment-box';
             commentBox.dataset.userIp = userIp;
             commentBox.innerHTML = `
-                <span class="comment-user">${userData.name || userIp}:</span>
-                <span class="comment">${userData.comment}</span>
-            `;
+            <span class="comment-user">${userData.name || userIp}:</span>
+            <span class="comment">${userData.comment}</span>
+        `;
 
             if (userIp === currentUserIp) {
                 commentBox.classList.add('current-user');
@@ -1175,9 +1179,9 @@ foreach ($data as $ip => $userData) {
                 }
 
                 userCommentBox.innerHTML = `
-                    <span class="comment-user"><?php echo htmlspecialchars($data[$user_ip]['name']); ?>:</span>
-                    <span class="comment">${comment}</span>
-                `;
+                <span class="comment-user"><?php echo htmlspecialchars($data[$user_ip]['name']); ?>:</span>
+                <span class="comment">${comment}</span>
+            `;
 
                 userCommentBox.addEventListener('click', function() {
                     editComment(container, isModal);
@@ -1195,6 +1199,71 @@ foreach ($data as $ip => $userData) {
             }
         }
 
+        function checkForUpdates() {
+            fetch(`<?php echo $_SERVER['PHP_SELF']; ?>?check_updates=1&lastModified=${lastModified}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    if (result.updated && result.data) {
+                        updateUI(result.data);
+                        lastModified = result.lastModified;
+                    } else if (result.lastModified) {
+                        lastModified = result.lastModified;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking for updates:', error);
+                })
+                .finally(() => {
+                    setTimeout(checkForUpdates, 2000);
+                });
+        }
+
+        function addFooterEventListeners(footer) {
+            const minimizeButton = footer.querySelector('.minimize-button');
+            const starredList = footer.querySelector('.starred-list');
+            const downloadAllButton = footer.querySelector('.download-all-button');
+            const copyNamesButton = footer.querySelector('.copy-names-button');
+
+            minimizeButton.addEventListener('click', () => {
+                footer.classList.toggle('minimized');
+                minimizeButton.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
+            });
+
+            starredList.addEventListener('click', (event) => {
+                const thumbnail = event.target.closest('.starred-thumbnail');
+                if (thumbnail) {
+                    const imageName = thumbnail.dataset.fullImage.split('/').pop();
+                    currentFullImagePath = imageName;
+                    currentImageIndex = -1; // Indicate that this is a footer image
+                    updateModal();
+                    modal.style.display = 'block';
+                }
+            });
+
+            downloadAllButton.addEventListener('click', () => {
+                const starredImages = Array.from(starredList.querySelectorAll('.starred-thumbnail'))
+                    .map(thumbnail => thumbnail.dataset.fullImage);
+                downloadImages(starredImages);
+            });
+
+            copyNamesButton.addEventListener('click', () => {
+                const imageNames = Array.from(starredList.querySelectorAll('.starred-thumbnail'))
+                    .map(thumbnail => thumbnail.dataset.fullImage.split('/').pop())
+                    .join('\n');
+                navigator.clipboard.writeText(imageNames).then(() => {
+                    showToast('Image names copied to clipboard');
+                }).catch(err => {
+                    console.error('Failed to copy image names: ', err);
+                    showToast('Failed to copy image names');
+                });
+            });
+        }
+
         function updateStarredFooters() {
             let starredFootersContainer = document.getElementById('starred-footers-container');
             if (!starredFootersContainer) {
@@ -1208,6 +1277,7 @@ foreach ($data as $ip => $userData) {
                 if (!currentUserFooter) {
                     const newFooter = createStarredFooter(currentUserIp, initialStarredImages);
                     starredFootersContainer.appendChild(newFooter);
+                    addFooterEventListeners(newFooter);
                 } else {
                     const starredList = currentUserFooter.querySelector('.starred-list');
                     starredList.innerHTML = '';
@@ -1215,6 +1285,7 @@ foreach ($data as $ip => $userData) {
                         const thumbnail = createThumbnail(imageName);
                         starredList.appendChild(thumbnail);
                     });
+                    addFooterEventListeners(currentUserFooter);
                 }
                 document.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"]`).style.display = 'flex';
             } else if (currentUserFooter) {
@@ -1307,30 +1378,6 @@ foreach ($data as $ip => $userData) {
             document.getElementById('footer-spacer').style.height = footerHeight + 'px';
         }
 
-        function checkForUpdates() {
-            fetch(`<?php echo $_SERVER['PHP_SELF']; ?>?check_updates=1&lastModified=${lastModified}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(result => {
-                    if (result.updated && result.data) {
-                        updateUI(result.data);
-                        lastModified = result.lastModified;
-                    } else if (result.lastModified) {
-                        lastModified = result.lastModified;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking for updates:', error);
-                })
-                .finally(() => {
-                    setTimeout(checkForUpdates, 2000);
-                });
-        }
-
         function updateUI(data) {
             const allComments = {};
             Object.keys(data).forEach(userIp => {
@@ -1403,7 +1450,6 @@ foreach ($data as $ip => $userData) {
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            initializeStarredImages();
             const gallery = document.querySelector('.gallery');
             const modal = document.getElementById('imageModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -1414,61 +1460,11 @@ foreach ($data as $ip => $userData) {
             const nextBtn = document.querySelector('.next');
             const starredFootersContainer = document.getElementById('starred-footers-container');
 
-            function initializeStarredImages() {
-                document.querySelectorAll('.image-container').forEach(container => {
-                    const starButton = container.querySelector('.star-button');
-                    const imageName = container.dataset.image;
-                    const isStarred = initialStarredImages.includes(imageName);
-                    updateStarButton(starButton, isStarred);
-                    container.classList.toggle('starred', isStarred);
-                });
-                updateStarredFooters();
-            }
-
             let currentImageIndex = 0;
             let currentFullImagePath = '';
 
             images = Array.from(document.querySelectorAll('.image-container'));
-
             modalImg = document.getElementById('modalImage');
-
-            function navigateModal(direction) {
-                if (currentImageIndex >= 0) {
-                    // We're viewing a gallery image
-                    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
-                    const newImage = images[currentImageIndex];
-                    currentFullImagePath = newImage.dataset.image;
-                } else {
-                    // We're viewing a footer image, so we can't navigate
-                    // You might want to show a message to the user here
-                    console.log("Navigation not available for this image.");
-                    return;
-                }
-                updateModal();
-            }
-
-            function openModal(containerOrImageName) {
-                let imageContainer;
-                let imageName;
-
-                if (typeof containerOrImageName === 'string') {
-                    imageName = containerOrImageName;
-                    imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
-                } else {
-                    imageContainer = containerOrImageName;
-                    imageName = imageContainer.dataset.image;
-                }
-
-                if (imageContainer) {
-                    currentImageIndex = images.indexOf(imageContainer);
-                } else {
-                    currentImageIndex = -1;
-                }
-
-                currentFullImagePath = `${baseUrl}/${imageName}`;
-                updateModal();
-                modal.style.display = 'block';
-            }
 
             function updateModal() {
                 if (currentImageIndex >= 0) {
@@ -1483,7 +1479,7 @@ foreach ($data as $ip => $userData) {
                     updateStarButton(modalStarButton, isStarred);
                     modalDownloadButton.href = imageSrc;
                     modalDownloadButton.download = imageSrc.split('/').pop();
-                    currentFullImagePath = imageSrc.split('/').pop(); // Store only the filename
+                    currentFullImagePath = imageSrc.split(' / ').pop(); // Store only the filename
 
                     // Update comments
                     updateModalComments(currentImage);
@@ -1596,62 +1592,64 @@ foreach ($data as $ip => $userData) {
                 input.focus();
             }
 
-            closeBtn.onclick = function() {
-                modal.style.display = 'none';
+            function downloadImages(imageUrls) {
+                imageUrls.forEach((url, index) => {
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = url.split('/').pop();
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }, index * 1000);
+                });
             }
 
-            prevBtn.onclick = function() {
-                navigateModal(-1);
+            function initializeStarredImages() {
+                document.querySelectorAll('.image-container').forEach(container => {
+                    const starButton = container.querySelector('.star-button');
+                    const imageName = container.dataset.image;
+                    const isStarred = initialStarredImages.includes(imageName);
+                    updateStarButton(starButton, isStarred);
+                    container.classList.toggle('starred', isStarred);
+                });
+                updateStarredFooters();
             }
 
-            nextBtn.onclick = function() {
-                navigateModal(1);
-            }
-
-            modalStarButton.onclick = function() {
-                toggleStar(currentFullImagePath);
-            }
-
-            window.onclick = function(e) {
-                if (e.target == modal) {
-                    modal.style.display = 'none';
+            function navigateModal(direction) {
+                if (currentImageIndex >= 0) {
+                    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+                    const newImage = images[currentImageIndex];
+                    currentFullImagePath = newImage.dataset.image;
+                } else {
+                    console.log("Navigation not available for this image.");
+                    return;
                 }
+                updateModal();
             }
 
-            document.addEventListener('keydown', function(e) {
-                if (modal.style.display === 'block') {
-                    if (e.key === 'ArrowLeft') {
-                        navigateModal(-1);
-                    } else if (e.key === 'ArrowRight') {
-                        navigateModal(1);
-                    } else if (e.key === 'Escape') {
-                        modal.style.display = 'none';
-                    }
+            function openModal(containerOrImageName) {
+                let imageContainer;
+                let imageName;
+
+                if (typeof containerOrImageName === 'string') {
+                    imageName = containerOrImageName;
+                    imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                } else {
+                    imageContainer = containerOrImageName;
+                    imageName = imageContainer.dataset.image;
                 }
-            });
 
-            const logo = document.querySelector('#logo-container svg');
-            logo.addEventListener('click', function() {
-                window.location.href = '/';
-            });
-
-            const topUserName = document.getElementById('top-user-name');
-            topUserName.addEventListener('click', function() {
-                makeNameEditable(this);
-            });
-
-            gallery.addEventListener('click', function(e) {
-                const container = e.target.closest('.image-container');
-                if (!container) return;
-
-                if (e.target.tagName === 'IMG') {
-                    openModal(container);
-                } else if (e.target.classList.contains('star-button')) {
-                    toggleStar(container);
-                } else if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
-                    editComment(container);
+                if (imageContainer) {
+                    currentImageIndex = images.indexOf(imageContainer);
+                } else {
+                    currentImageIndex = -1;
                 }
-            });
+
+                currentFullImagePath = imageName;
+                updateModal();
+                modal.style.display = 'block';
+            }
 
             function makeNameEditable(nameSpan) {
                 const currentName = nameSpan.textContent;
@@ -1742,8 +1740,66 @@ foreach ($data as $ip => $userData) {
                 });
             }
 
-            let lastModified = 0;
-            checkForUpdates();
+            // Initialize the page
+            initializeStarredImages();
+
+            // Add event listeners
+            closeBtn.onclick = function() {
+                modal.style.display = 'none';
+            }
+
+            prevBtn.onclick = function() {
+                navigateModal(-1);
+            }
+
+            nextBtn.onclick = function() {
+                navigateModal(1);
+            }
+
+            modalStarButton.onclick = function() {
+                toggleStar(currentFullImagePath.replace(/^\//, '')); // Remove leading slash here as well
+            }
+
+            window.onclick = function(e) {
+                if (e.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (modal.style.display === 'block') {
+                    if (e.key === 'ArrowLeft') {
+                        navigateModal(-1);
+                    } else if (e.key === 'ArrowRight') {
+                        navigateModal(1);
+                    } else if (e.key === 'Escape') {
+                        modal.style.display = 'none';
+                    }
+                }
+            });
+
+            const logo = document.querySelector('#logo-container svg');
+            logo.addEventListener('click', function() {
+                window.location.href = '/';
+            });
+
+            const topUserName = document.getElementById('top-user-name');
+            topUserName.addEventListener('click', function() {
+                makeNameEditable(this);
+            });
+
+            gallery.addEventListener('click', function(e) {
+                const container = e.target.closest('.image-container');
+                if (!container) return;
+
+                if (e.target.tagName === 'IMG') {
+                    openModal(container);
+                } else if (e.target.classList.contains('star-button')) {
+                    toggleStar(container);
+                } else if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
+                    editComment(container);
+                }
+            });
 
             const topBar = document.getElementById('top-bar');
             const maxScrollForShadow = 100; // Maximum scroll position for shadow effect
@@ -1766,6 +1822,9 @@ foreach ($data as $ip => $userData) {
                     editComment(document.getElementById('imageModal'), true);
                 }
             });
+
+            // Start the update check
+            checkForUpdates();
         });
     </script>
 </head>
@@ -1822,8 +1881,10 @@ foreach ($data as $ip => $userData) {
         <?php if (!empty($userStarredImages)): ?>
             <?php foreach ($userStarredImages as $ip => $userData): ?>
                 <div class="starred-footer" data-user-ip="<?php echo $ip; ?>">
-                    <button class="minimize-button" title="Minimize">▼</button>
-                    <span class="user-name" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
+                    <div class="starred-footer-header">
+                        <button class="minimize-button" title="Minimize">▼</button>
+                        <span class="user-name" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
+                    </div>
                     <div class="starred-list-container">
                         <div class="starred-list">
                             <?php foreach ($userData['starred_images'] as $image):
