@@ -22,9 +22,12 @@ ReviewGrid is perfect for quickly sharing and reviewing sets of images, whether 
    ```
    git clone https://github.com/ktonini/reviewGrid.git
    ```
-2. Ensure you have PHP installed on your server.
-3. Place your images in the `_data/images/` directory.
-4. Configure your web server to serve the project directory.
+2. Ensure you have PHP installed on your server (PHP 7.0 or higher recommended).
+3. Place the `index.php` file in the directory containing the images you want to display.
+4. Ensure the web server has write permissions for the directory where `index.php` is located.
+5. Access the `index.php` file through your web browser.
+
+Note: The script will automatically create a `_data` folder to store thumbnails and user interaction data. This folder and its contents can be safely deleted to reset the gallery state.
 
 ## Usage
 
