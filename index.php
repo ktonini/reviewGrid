@@ -3,17 +3,17 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Configuration
-$baseUrl = rtrim((!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']), '/');
+$baseUrl = rtrim((!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'], '/');
 $scriptDir = dirname($_SERVER['SCRIPT_FILENAME']) . '/';
-$subDir = rtrim(str_replace($_SERVER['DOCUMENT_ROOT'], '', $scriptDir), '/');
 $dataDir = $scriptDir . '_data/';
 $thumbsDir = $dataDir . 'thumbs/';
+$subDir = trim(dirname($_SERVER['PHP_SELF']), '/');
 $columns = 4;
 $thumbWidth = 250;
 $thumbHeight = 250;
 
 // Create relative URLs for use in HTML
-$relativeDataUrl = '/_data';
+$relativeDataUrl = $subDir ? "/$subDir/_data" : '/_data';
 $relativeThumbsUrl = $relativeDataUrl . '/thumbs';
 
 // Get the directory name for the title
@@ -271,6 +271,7 @@ foreach ($data as $ip => $userData) {
             --scrollbar-bg: rgba(255, 255, 255, 0.1);
             --scrollbar-thumb: rgba(255, 255, 255, 0.3);
             --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
+            --footer-shadow: 0 -20px 100px rgba(0, 0, 0, 0.4);
         }
 
         body {
@@ -463,17 +464,17 @@ foreach ($data as $ip => $userData) {
             flex-direction: column;
             max-height: 50vh;
             overflow-y: auto;
-            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--footer-shadow);
         }
 
         .starred-footer {
             display: flex;
             align-items: center;
             padding: 0.625em;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(44, 44, 44, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             color: #fff;
-            backdrop-filter: blur(1em);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .minimize-button {
@@ -847,13 +848,15 @@ foreach ($data as $ip => $userData) {
             top: 0;
             left: 0;
             right: 0;
+            height: 60px;
+            /* Set a fixed height */
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             padding: 0.5em;
             background-color: rgba(44, 44, 44, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: 1000;
             box-shadow: 0 0 0 rgba(0, 0, 0, 0);
         }
@@ -862,14 +865,20 @@ foreach ($data as $ip => $userData) {
             box-shadow: 0 20px 10px rgba(0, 0, 0, 0.4);
         }
 
-        #logo-container,
-        #user-name-container {
-            flex: 0 0 auto;
+        #logo-container {
+            position: absolute;
+            left: 0.5em;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         #logo-container svg {
             fill: var(--text-color);
             transition: fill 0.3s ease;
+            width: 40px;
+            /* Adjust as needed */
+            height: 40px;
+            /* Adjust as needed */
         }
 
         #logo-container:hover svg {
@@ -877,7 +886,6 @@ foreach ($data as $ip => $userData) {
         }
 
         #page-title {
-            flex: 1;
             text-align: center;
             margin: 0;
             font-size: 1.5em;
@@ -885,19 +893,40 @@ foreach ($data as $ip => $userData) {
         }
 
         #user-name-container {
+            position: absolute;
+            right: 0.5em;
+            top: 50%;
+            transform: translateY(-50%);
             display: flex;
             align-items: center;
-        }
-
-        #top-user-name {
             background-color: #444;
             color: #fff;
             padding: 0.5em 1em;
             border-radius: 20px;
+            border: 1px solid #555;
+        }
+
+        .edit-icon {
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        .edit-icon .st0 {
+            fill: none;
+            stroke: var(--text-color);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #top-user-name {
             cursor: pointer;
             transition: background-color 0.2s ease;
             font-size: 0.9em;
-            border: 1px solid #555;
+            margin-right: 5px;
         }
 
         #top-user-name:hover {
@@ -936,6 +965,25 @@ foreach ($data as $ip => $userData) {
         let baseUrl = '<?php echo $baseUrl; ?>';
         let relativeThumbsUrl = '<?php echo $relativeThumbsUrl; ?>';
         let subDir = '<?php echo $subDir; ?>';
+
+        // Add this near the top of your script, outside any functions
+        let currentFullImagePath = '';
+
+
+        function initializeModalElements() {
+            modal = document.getElementById('imageModal');
+            if (modal) {
+                modalImg = document.getElementById('modalImage');
+                modalTitle = document.getElementById('modalTitle');
+                closeBtn = modal.querySelector('.close');
+                prevBtn = modal.querySelector('.prev');
+                nextBtn = modal.querySelector('.next');
+                modalStarButton = document.getElementById('modalStarButton');
+                modalDownloadButton = document.getElementById('modalDownloadButton');
+            } else {
+                console.error('Modal element not found in the DOM');
+            }
+        }
 
         function updateStarButton(button, isStarred) {
             button.classList.toggle('starred', isStarred);
@@ -1130,6 +1178,14 @@ foreach ($data as $ip => $userData) {
                         updateSingleComment(imageName, currentUserIp, comment);
                         if (typeof checkForUpdates === 'function') {
                             checkForUpdates();
+                        }
+                        // Refresh modal comments if the modal is open and showing this image
+                        if (modal && modal.style && modal.style.display === 'block' && currentFullImagePath === imageName) {
+                            if (currentImageIndex >= 0 && images && images[currentImageIndex]) {
+                                updateModalComments(images[currentImageIndex]);
+                            } else {
+                                updateModal(); // For footer images
+                            }
                         }
                     } else {
                         console.error('Failed to update comment:', data.error);
@@ -1452,19 +1508,17 @@ foreach ($data as $ip => $userData) {
         document.addEventListener('DOMContentLoaded', function() {
             const gallery = document.querySelector('.gallery');
             const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
             const modalTitle = document.getElementById('modalTitle');
+            const closeBtn = modal.querySelector('.close');
+            const prevBtn = modal.querySelector('.prev');
+            const nextBtn = modal.querySelector('.next');
             const modalStarButton = document.getElementById('modalStarButton');
             const modalDownloadButton = document.getElementById('modalDownloadButton');
-            const closeBtn = document.querySelector('.close');
-            const prevBtn = document.querySelector('.prev');
-            const nextBtn = document.querySelector('.next');
-            const starredFootersContainer = document.getElementById('starred-footers-container');
-
-            let currentImageIndex = 0;
+            let currentImageIndex = -1;
             let currentFullImagePath = '';
-
-            images = Array.from(document.querySelectorAll('.image-container'));
-            modalImg = document.getElementById('modalImage');
+            initializeModalElements();
+            const images = Array.from(document.querySelectorAll('.image-container'));
 
             function updateModal() {
                 if (currentImageIndex >= 0) {
@@ -1479,7 +1533,7 @@ foreach ($data as $ip => $userData) {
                     updateStarButton(modalStarButton, isStarred);
                     modalDownloadButton.href = imageSrc;
                     modalDownloadButton.download = imageSrc.split('/').pop();
-                    currentFullImagePath = imageSrc.split(' / ').pop(); // Store only the filename
+                    currentFullImagePath = imageSrc.split('/').pop(); // Store only the filename
 
                     // Update comments
                     updateModalComments(currentImage);
@@ -1537,7 +1591,7 @@ foreach ($data as $ip => $userData) {
                 }
             }
 
-            function editModalComment(imageName) {
+            function editModalComment() {
                 const commentContainer = modal.querySelector('.comment-container');
                 const currentUserComment = commentContainer.querySelector('.comment-box.current-user');
                 const commentPlaceholder = commentContainer.querySelector('.comment-placeholder');
@@ -1559,13 +1613,17 @@ foreach ($data as $ip => $userData) {
 
                 function saveModalComment() {
                     const newComment = input.value.trim();
-                    updateComment(imageName, newComment);
 
-                    // Refresh the modal content after saving the comment
+                    // Immediately update the UI
+                    updateCommentUIForContainer(modal, currentUserIp, newComment, true);
+
+                    // Then update the server and refresh
+                    updateComment(currentFullImagePath, newComment);
+
+                    // Refresh the comments for the main gallery image
                     if (currentImageIndex >= 0) {
-                        updateModalComments(images[currentImageIndex]);
-                    } else {
-                        updateModal(); // For footer images
+                        const currentImage = images[currentImageIndex];
+                        updateCommentUIForContainer(currentImage, currentUserIp, newComment, false);
                     }
                 }
 
@@ -1783,9 +1841,12 @@ foreach ($data as $ip => $userData) {
                 window.location.href = '/';
             });
 
-            const topUserName = document.getElementById('top-user-name');
-            topUserName.addEventListener('click', function() {
-                makeNameEditable(this);
+            const userNameContainer = document.getElementById('user-name-container');
+            userNameContainer.addEventListener('click', function(e) {
+                const topUserName = document.getElementById('top-user-name');
+                if (e.target === topUserName || e.target.closest('.edit-icon')) {
+                    makeNameEditable(topUserName);
+                }
             });
 
             gallery.addEventListener('click', function(e) {
@@ -1802,12 +1863,21 @@ foreach ($data as $ip => $userData) {
             });
 
             const topBar = document.getElementById('top-bar');
+            const starredFootersContainer = document.getElementById('starred-footers-container');
             const maxScrollForShadow = 100; // Maximum scroll position for shadow effect
 
             function handleScroll() {
                 const scrollPosition = window.scrollY;
-                const shadowOpacity = Math.min(scrollPosition / maxScrollForShadow, 1);
-                topBar.style.boxShadow = `0 20px 10px rgba(0, 0, 0, ${shadowOpacity * 0.4})`;
+                const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+
+                // Top bar shadow
+                const topShadowOpacity = Math.min(scrollPosition / maxScrollForShadow, 1);
+                topBar.style.boxShadow = `0 20px 10px rgba(0, 0, 0, ${topShadowOpacity * 0.4})`;
+
+                // Footer shadow
+                const bottomScrollPosition = maxScroll - scrollPosition;
+                const footerShadowOpacity = Math.min(bottomScrollPosition / maxScrollForShadow, 1);
+                starredFootersContainer.style.boxShadow = `0 -20px 10px rgba(0, 0, 0, ${footerShadowOpacity * 0.4})`;
             }
 
             window.addEventListener('scroll', handleScroll);
@@ -1819,7 +1889,7 @@ foreach ($data as $ip => $userData) {
             const modalCommentContainer = document.querySelector('#imageModal .comment-container');
             modalCommentContainer.addEventListener('click', function(e) {
                 if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
-                    editComment(document.getElementById('imageModal'), true);
+                    editModalComment();
                 }
             });
 
@@ -1845,6 +1915,10 @@ foreach ($data as $ip => $userData) {
         <h1 id="page-title"><?php echo htmlspecialchars($title); ?></h1>
         <div id="user-name-container">
             <span id="top-user-name" class="user-name editable" data-user-ip="<?php echo $user_ip; ?>"><?php echo htmlspecialchars($data[$user_ip]['name']); ?></span>
+            <svg class="edit-icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 24 24" xml:space="preserve">
+                <path class="st0" d="M11,4H4C2.9,4,2,4.9,2,6v14c0,1.1,0.9,2,2,2h14c1.1,0,2-0.9,2-2v-7" />
+                <path class="st0" d="M18.5,2.5c0.83-0.83,2.17-0.83,3,0s0.83,2.17,0,3L12,15l-4,1l1-4L18.5,2.5z" />
+            </svg>
         </div>
     </div>
     <div class="gallery">
@@ -1888,7 +1962,7 @@ foreach ($data as $ip => $userData) {
                     <div class="starred-list-container">
                         <div class="starred-list">
                             <?php foreach ($userData['starred_images'] as $image):
-                                $thumbPath = ($subDir ? '/' . $subDir : '') . '/_data/thumbs/' . $image;
+                                $thumbPath = $relativeThumbsUrl . '/' . $image;
                                 $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $image;
                             ?>
                                 <div class="starred-thumbnail" data-full-image="<?php echo $fullImagePath; ?>">
