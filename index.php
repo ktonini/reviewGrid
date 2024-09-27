@@ -1327,6 +1327,21 @@ foreach ($data as $ip => $userData) {
 
             modalImg = document.getElementById('modalImage');
 
+            function navigateModal(direction) {
+                if (currentImageIndex >= 0) {
+                    // We're viewing a gallery image
+                    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+                    const newImage = images[currentImageIndex];
+                    currentFullImagePath = newImage.dataset.image;
+                } else {
+                    // We're viewing a footer image, so we can't navigate
+                    // You might want to show a message to the user here
+                    console.log("Navigation not available for this image.");
+                    return;
+                }
+                updateModal();
+            }
+
             function openModal(containerOrImageName) {
                 let imageContainer;
                 let imageName;
@@ -1369,6 +1384,10 @@ foreach ($data as $ip => $userData) {
 
                     // Update comments
                     updateModalComments(currentImage);
+
+                    // Show navigation buttons
+                    prevBtn.style.display = 'block';
+                    nextBtn.style.display = 'block';
                 } else {
                     // Handle case for images not in the current view (e.g., from footer)
                     const imageSrc = currentFullImagePath;
@@ -1389,6 +1408,10 @@ foreach ($data as $ip => $userData) {
                     commentPlaceholder.textContent = 'Comment';
                     commentPlaceholder.addEventListener('click', () => editModalComment(currentFullImagePath));
                     commentContainer.appendChild(commentPlaceholder);
+
+                    // Hide navigation buttons for footer images
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
                 }
             }
 
