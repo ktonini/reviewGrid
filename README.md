@@ -10,9 +10,7 @@ ReviewGrid is a PHP-based image gallery application that allows users to view, c
 - Star/unstar functionality for favorite images
 - Download option for images
 - Responsive design for various screen sizes
-- User identification and assignment based on IP address
-  - Allows for persistent user actions (comments, stars) without login
-  - Supports multiple users on shared networks
+- User identification and assignment based on IP address allows for persistent user actions (comments, stars) without login
 
 ## Installation
 
