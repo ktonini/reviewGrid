@@ -884,15 +884,14 @@ foreach ($data as $ip => $userData) {
             top: 0;
             left: 0;
             right: 0;
-            height: 60px;
-            /* Set a fixed height */
+            height: 3.75em;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 0.5em;
             background-color: rgba(44, 44, 44, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(1.25em);
+            -webkit-backdrop-filter: blur(1.25em);
             z-index: 1000;
             box-shadow: 0 0 0 rgba(0, 0, 0, 0);
         }
@@ -906,6 +905,8 @@ foreach ($data as $ip => $userData) {
             left: 0.5em;
             top: 50%;
             transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
         }
 
         #logo-container svg {
@@ -933,13 +934,8 @@ foreach ($data as $ip => $userData) {
             right: 0.5em;
             top: 50%;
             transform: translateY(-50%);
-            display: flex;
             align-items: center;
-            background-color: #444;
             color: #fff;
-            padding: 0.5em 1em;
-            border-radius: 20px;
-            border: 1px solid #555;
         }
 
         .edit-icon {
@@ -965,25 +961,24 @@ foreach ($data as $ip => $userData) {
             margin-right: 5px;
         }
 
-        #top-user-name:hover {
-            background-color: #555;
+        #user-name-container:hover {
+            color: var(--star-color);
         }
 
         .user-name-input {
-            background-color: #444;
             color: #fff;
             border: 1px solid #555;
             padding: 0.5em 1em;
-            border-radius: 20px;
+            border-radius: 0.5em;
             font-size: 0.9em;
             width: auto;
-            min-width: 150px;
+            min-width: 9.375em;
+            background-color: rgba(0, 0, 0, 0.1);
         }
 
         .user-name-input:focus {
             outline: none;
             border-color: #777;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
         }
 
         /* Add some padding to the body to account for the fixed top bar */
@@ -1672,8 +1667,9 @@ foreach ($data as $ip => $userData) {
                     const thumbnail = createThumbnail(imageName, false);
                     starredList.appendChild(thumbnail);
                 });
-                userFooter.style.display = starredImages.length > 0 ? 'flex' : 'none';
+                userFooter.style.display = starredImages.length > 0 ? 'grid' : 'none';
             }
+            addFooterEventListeners(userFooter);
         }
 
         function updateUserName(userIp, newName) {
