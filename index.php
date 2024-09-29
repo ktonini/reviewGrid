@@ -210,7 +210,7 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
     <div class="image-container <?php echo $isStarred ? 'starred' : ''; ?>" data-image="<?php echo $filename; ?>">
         <img src="<?php echo $thumbPath; ?>" alt="<?php echo $title; ?>" data-full-image="<?php echo $fullImagePath; ?>">
         <div class="image-info">
-            <h3 class="image-title"><?php echo $title; ?></h3>
+            <h3 class="image-title ellipsis" title="<?php echo $title; ?>"><?php echo $title; ?></h3>
             <div class="comment-container">
                 <?php generateCommentBoxes($filename, $data, $user_ip); ?>
                 <div class="comment-placeholder">Comment</div>
@@ -280,13 +280,18 @@ foreach ($data as $ip => $userData) {
             color: var(--text-color);
             background-color: var(--bg-color);
             margin: 0;
-            padding-bottom: 3.75em;
             padding-top: 1.25em;
         }
 
         h1 {
             text-align: center;
             margin-bottom: 1.25em;
+        }
+
+        .ellipsis {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .gallery {
@@ -388,61 +393,82 @@ foreach ($data as $ip => $userData) {
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
+            background-color: rgba(44, 44, 44, 0.8);
+            backdrop-filter: blur(20px);
         }
 
         .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 80%;
+            display: grid;
+            grid-template-rows: auto 1fr auto auto auto;
+            grid-template-columns: 3em 1fr 3em;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-        }
-
-        .modal-info {
-            position: absolute;
-            bottom: 1.25em;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: #fff;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 0.625em;
-        }
-
-        .modal-info .star-button,
-        .modal-info .download-button {
-            font-size: 2em;
-            margin-top: 0.625em;
-        }
-
-        .close,
-        .prev,
-        .next {
-            position: absolute;
-            color: #f1f1f1;
-            font-size: 2em;
-            font-weight: bold;
-            transition: 0.2s;
-            cursor: pointer;
+            padding: 20px;
+            border-radius: 10px;
         }
 
         .close {
-            top: 0.9375em;
-            right: 2.1875em;
+            grid-column: 3;
+            grid-row: 1;
+            font-size: 2em;
+            cursor: pointer;
+            align-self: center;
+            justify-self: center;
         }
 
         .prev {
-            top: 50%;
-            left: 2.1875em;
+            grid-column: 1;
+            grid-row: 2;
+            align-self: center;
+            justify-self: center;
         }
 
         .next {
-            top: 50%;
-            right: 2.1875em;
+            grid-column: 3;
+            grid-row: 2;
+            align-self: center;
+            justify-self: center;
+        }
+
+        .modal-image-container {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #modalImage {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        #modalTitle {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            text-align: center;
+            margin: 0;
+        }
+
+        .comment-container {
+            grid-column: 2 / -2;
+            grid-row: 4;
+            overflow-y: auto;
+            max-height: 150px;
+        }
+
+        .button-container {
+            grid-column: 1 / -1;
+            grid-row: 5;
+            display: flex;
+            justify-content: space-between;
         }
 
         .close:hover,
@@ -465,57 +491,66 @@ foreach ($data as $ip => $userData) {
             max-height: 50vh;
             overflow-y: auto;
             box-shadow: var(--footer-shadow);
-        }
-
-        .starred-footer {
-            display: flex;
-            align-items: center;
-            padding: 0.625em;
             background-color: rgba(44, 44, 44, 0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
+        }
+
+        .starred-footer {
+            display: grid;
+            grid-template-columns: auto 5em 1fr auto auto;
+            grid-template-areas: "minimize user list download copy";
+            align-items: center;
+            padding: 0.625em;
             color: #fff;
+            gap: 0.625em;
         }
 
         .minimize-button {
+            grid-area: minimize;
             background: none;
             border: none;
             color: var(--button-color);
             cursor: pointer;
             font-size: 0.8em;
-            padding: 0.3125em 0.625em;
+            padding: 0.3125em;
             transition: transform 0.2s ease;
-            margin-right: 0.625em;
-        }
-
-        .minimize-button:hover {
-            transform: scale(1.2);
         }
 
         .user-name {
+            grid-area: user;
             flex-shrink: 0;
-        }
-
-        .starred-footer-header {
             min-width: 5em;
         }
 
         .starred-list-container {
-            flex-grow: 1;
+            grid-area: list;
             overflow-x: auto;
-            margin: 0 0.625em;
+            margin-bottom: -1em;
         }
 
-        .copy-button {
-            margin-left: auto;
+        .footer-buttons {
+            grid-area: download / download / copy / copy;
+            display: flex;
+            gap: 0.625em;
         }
 
-        .starred-footer.minimized .minimize-button {
-            transform: rotate(180deg);
+        .download-all-button {
+            grid-area: download;
+        }
+
+        .copy-names-button {
+            grid-area: copy;
         }
 
         .starred-footer.minimized {
-            padding: 0.3125em 0.625em;
+            grid-template-columns: auto 1fr;
+            grid-template-areas: "minimize user";
+        }
+
+        .starred-footer.minimized .starred-list-container,
+        .starred-footer.minimized .footer-buttons {
+            display: none;
         }
 
         .starred-list {
@@ -832,7 +867,7 @@ foreach ($data as $ip => $userData) {
         }
 
         .starred-footer.minimized .minimize-button {
-            transform: rotate(180deg);
+            transform: rotate(90deg);
         }
 
         .starred-footer.minimized {
@@ -959,8 +994,6 @@ foreach ($data as $ip => $userData) {
         let initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
         const currentUserIp = '<?php echo $user_ip; ?>';
         let lastModified = 0;
-        let images;
-        let modalImg;
 
         let baseUrl = '<?php echo $baseUrl; ?>';
         let relativeThumbsUrl = '<?php echo $relativeThumbsUrl; ?>';
@@ -969,6 +1002,12 @@ foreach ($data as $ip => $userData) {
         // Add this near the top of your script, outside any functions
         let currentFullImagePath = '';
 
+        let userStarredImages = <?php echo json_encode($userStarredImages); ?>;
+
+
+        let modal, modalImg, modalTitle, closeBtn, prevBtn, nextBtn, modalStarButton, modalDownloadButton;
+        let currentImageIndex = -1;
+        let images = [];
 
         function initializeModalElements() {
             modal = document.getElementById('imageModal');
@@ -982,6 +1021,78 @@ foreach ($data as $ip => $userData) {
                 modalDownloadButton = document.getElementById('modalDownloadButton');
             } else {
                 console.error('Modal element not found in the DOM');
+            }
+        }
+
+        function updateModal() {
+            console.debug("Updating modal, currentImageIndex:", currentImageIndex);
+            if (currentImageIndex >= 0) {
+                const currentImage = images[currentImageIndex];
+                const imageSrc = currentImage.querySelector('img').dataset.fullImage;
+                const imageTitle = currentImage.querySelector('.image-title').textContent;
+                const isStarred = currentImage.classList.contains('starred');
+
+                modalImg.src = imageSrc;
+                modalImg.alt = imageTitle;
+                modalTitle.textContent = imageTitle;
+                updateStarButton(modalStarButton, isStarred);
+                modalDownloadButton.href = imageSrc;
+                modalDownloadButton.download = imageSrc.split('/').pop();
+                currentFullImagePath = imageSrc.split('/').pop(); // Store only the filename
+
+                // Update comments
+                updateModalComments(currentImage);
+
+                // Show navigation buttons
+                prevBtn.style.display = 'block';
+                nextBtn.style.display = 'block';
+            } else {
+                // Handle case for images not in the current view (e.g., from footer)
+                const imageTitle = currentFullImagePath.split('/').pop();
+
+                modalImg.src = `${baseUrl}${subDir ? '/' + subDir : ''}/${currentFullImagePath}`;
+                modalImg.alt = imageTitle;
+                modalTitle.textContent = imageTitle;
+                updateStarButton(modalStarButton, initialStarredImages.includes(currentFullImagePath));
+                modalDownloadButton.href = modalImg.src;
+                modalDownloadButton.download = imageTitle;
+
+                // Clear comments for footer images
+                const commentContainer = modal.querySelector('.comment-container');
+                commentContainer.innerHTML = ''; // Clear existing comments
+                const commentPlaceholder = document.createElement('div');
+                commentPlaceholder.className = 'comment-placeholder';
+                commentPlaceholder.textContent = 'Comment';
+                commentPlaceholder.addEventListener('click', () => editModalComment(currentFullImagePath));
+                commentContainer.appendChild(commentPlaceholder);
+
+                // Hide navigation buttons for footer images
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+            console.debug("currentFullImagePath set to:", currentFullImagePath);
+        }
+
+        function updateModalComments(currentImage) {
+            const commentContainer = modal.querySelector('.comment-container');
+            commentContainer.innerHTML = ''; // Clear existing comments
+
+            const imageComments = currentImage.querySelectorAll('.comment-box');
+            imageComments.forEach(comment => {
+                const clonedComment = comment.cloneNode(true);
+                commentContainer.appendChild(clonedComment);
+
+                if (clonedComment.classList.contains('current-user')) {
+                    clonedComment.addEventListener('click', () => editModalComment(currentImage.dataset.image));
+                }
+            });
+
+            if (!commentContainer.querySelector('.comment-box.current-user')) {
+                const commentPlaceholder = document.createElement('div');
+                commentPlaceholder.className = 'comment-placeholder';
+                commentPlaceholder.textContent = 'Comment';
+                commentPlaceholder.addEventListener('click', () => editModalComment(currentImage.dataset.image));
+                commentContainer.appendChild(commentPlaceholder);
             }
         }
 
@@ -1001,21 +1112,27 @@ foreach ($data as $ip => $userData) {
         }
 
         function toggleStar(imageContainerOrName) {
+            console.debug("toggleStar called with:", imageContainerOrName);
+
             let imageName, imageContainer, starButton;
 
             if (typeof imageContainerOrName === 'string') {
-                // Remove leading slash if present (for modal view)
                 imageName = imageContainerOrName.replace(/^\//, '');
                 imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
                 starButton = imageContainer ? imageContainer.querySelector('.star-button') : modalStarButton;
+                console.debug("String input - imageName:", imageName);
             } else {
                 imageContainer = imageContainerOrName;
                 imageName = imageContainer.dataset.image;
                 starButton = imageContainer.querySelector('.star-button');
+                console.debug("Container input - imageName:", imageName);
             }
 
+            console.debug("Current initialStarredImages:", initialStarredImages);
             const isCurrentlyStarred = initialStarredImages.includes(imageName);
+            console.debug("Is currently starred:", isCurrentlyStarred);
             const newStarredState = !isCurrentlyStarred;
+            console.debug("New starred state:", newStarredState);
 
             updateStarredState(imageName, newStarredState);
             updateStarButton(starButton, newStarredState);
@@ -1023,8 +1140,9 @@ foreach ($data as $ip => $userData) {
                 imageContainer.classList.toggle('starred', newStarredState);
             }
             updateStarButton(modalStarButton, newStarredState);
-            updateStarredFooters(); // Add this line to update the footer immediately
+            updateStarredFooters();
 
+            console.debug("Sending fetch request for:", imageName);
             fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
                     method: 'POST',
                     headers: {
@@ -1034,6 +1152,7 @@ foreach ($data as $ip => $userData) {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.debug("Server response:", data);
                     if (!data.success) throw new Error('Server indicated failure');
                 })
                 .catch(error => {
@@ -1281,43 +1400,89 @@ foreach ($data as $ip => $userData) {
 
         function addFooterEventListeners(footer) {
             const minimizeButton = footer.querySelector('.minimize-button');
-            const starredList = footer.querySelector('.starred-list');
+            const thumbnails = footer.querySelectorAll('.starred-thumbnail');
             const downloadAllButton = footer.querySelector('.download-all-button');
             const copyNamesButton = footer.querySelector('.copy-names-button');
+            const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
 
             minimizeButton.addEventListener('click', () => {
                 footer.classList.toggle('minimized');
                 minimizeButton.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
             });
 
-            starredList.addEventListener('click', (event) => {
-                const thumbnail = event.target.closest('.starred-thumbnail');
-                if (thumbnail) {
-                    const imageName = thumbnail.dataset.fullImage.split('/').pop();
-                    currentFullImagePath = imageName;
-                    currentImageIndex = -1; // Indicate that this is a footer image
-                    updateModal();
-                    modal.style.display = 'block';
+            thumbnails.forEach(thumbnail => {
+                const imageName = thumbnail.dataset.fullImage.split('/').pop();
+
+                // Add click event to open modal for all users
+                thumbnail.addEventListener('click', (event) => {
+                    if (event.target === thumbnail || event.target.tagName === 'IMG') {
+                        openModal(imageName);
+                    }
+                });
+
+                if (isCurrentUserFooter) {
+                    const unstarButton = thumbnail.querySelector('button[title="Unstar"]');
+                    const downloadButton = thumbnail.querySelector('button[title="Download"]');
+
+                    if (unstarButton) {
+                        unstarButton.addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            toggleStar(imageName);
+                        });
+                    }
+
+                    if (downloadButton) {
+                        downloadButton.addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            downloadImage(thumbnail.dataset.fullImage);
+                        });
+                    }
+                } else {
+                    // Remove buttons for other users' footers
+                    thumbnail.querySelectorAll('.thumbnail-buttons').forEach(buttons => buttons.remove());
                 }
             });
 
-            downloadAllButton.addEventListener('click', () => {
-                const starredImages = Array.from(starredList.querySelectorAll('.starred-thumbnail'))
-                    .map(thumbnail => thumbnail.dataset.fullImage);
-                downloadImages(starredImages);
-            });
 
-            copyNamesButton.addEventListener('click', () => {
-                const imageNames = Array.from(starredList.querySelectorAll('.starred-thumbnail'))
-                    .map(thumbnail => thumbnail.dataset.fullImage.split('/').pop())
-                    .join('\n');
-                navigator.clipboard.writeText(imageNames).then(() => {
-                    showToast('Image names copied to clipboard');
-                }).catch(err => {
-                    console.error('Failed to copy image names: ', err);
-                    showToast('Failed to copy image names');
+            if (downloadAllButton) {
+                downloadAllButton.addEventListener('click', () => {
+                    const starredImages = Array.from(thumbnails).map(thumbnail => thumbnail.dataset.fullImage);
+                    downloadImages(starredImages);
                 });
-            });
+            }
+
+            if (copyNamesButton) {
+                copyNamesButton.addEventListener('click', () => {
+                    const starredList = footer.querySelector('.starred-list');
+                    let copyText = '';
+
+                    starredList.querySelectorAll('.starred-thumbnail').forEach(thumbnail => {
+                        const imageUrl = thumbnail.dataset.fullImage;
+                        copyText += `${imageUrl}\n`;
+
+                        // Find the corresponding image container in the main gallery
+                        const imageName = imageUrl.split('/').pop();
+                        const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                        if (imageContainer) {
+                            const comments = imageContainer.querySelectorAll('.comment-box');
+                            comments.forEach(comment => {
+                                const userName = comment.querySelector('.comment-user').textContent.trim();
+                                const commentText = comment.querySelector('.comment').textContent.trim();
+                                copyText += `    ${userName} ${commentText}\n`;
+                            });
+                        }
+                        copyText += '\n'; // Add an extra newline between images
+                    });
+
+                    navigator.clipboard.writeText(copyText.trim()).then(() => {
+                        showToast('Image URLs and comments copied to clipboard');
+                    }).catch(err => {
+                        console.error('Failed to copy image URLs and comments: ', err);
+                        showToast('Failed to copy image URLs and comments');
+                    });
+                });
+            }
+
         }
 
         function updateStarredFooters() {
@@ -1328,29 +1493,45 @@ foreach ($data as $ip => $userData) {
                 document.body.appendChild(starredFootersContainer);
             }
 
-            const currentUserFooter = document.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"]`);
-            if (initialStarredImages.length > 0) {
-                if (!currentUserFooter) {
-                    const newFooter = createStarredFooter(currentUserIp, initialStarredImages);
-                    starredFootersContainer.appendChild(newFooter);
-                    addFooterEventListeners(newFooter);
-                } else {
-                    const starredList = currentUserFooter.querySelector('.starred-list');
-                    starredList.innerHTML = '';
-                    initialStarredImages.forEach(imageName => {
-                        const thumbnail = createThumbnail(imageName);
-                        starredList.appendChild(thumbnail);
-                    });
-                    addFooterEventListeners(currentUserFooter);
-                }
-                document.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"]`).style.display = 'flex';
-            } else if (currentUserFooter) {
-                currentUserFooter.style.display = 'none';
+            // Update current user's footer
+            updateUserFooter(currentUserIp, initialStarredImages, true);
+
+            // Update other users' footers
+            if (userStarredImages) {
+                Object.keys(userStarredImages).forEach(userIp => {
+                    if (userIp !== currentUserIp) {
+                        updateUserFooter(userIp, userStarredImages[userIp].starred_images, false);
+                    }
+                });
             }
+
             updateFooterSpacerHeight();
         }
 
-        function createStarredFooter(userIp, starredImages) {
+        function updateUserFooter(userIp, starredImages, isCurrentUser) {
+            const starredFootersContainer = document.getElementById('starred-footers-container');
+            let footer = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
+
+            if (starredImages.length > 0) {
+                if (!footer) {
+                    footer = createStarredFooter(userIp, starredImages, isCurrentUser);
+                    starredFootersContainer.appendChild(footer);
+                } else {
+                    const starredList = footer.querySelector('.starred-list');
+                    starredList.innerHTML = '';
+                    starredImages.forEach(imageName => {
+                        const thumbnail = createThumbnail(imageName, isCurrentUser);
+                        starredList.appendChild(thumbnail);
+                    });
+                }
+                addFooterEventListeners(footer);
+                footer.style.display = 'grid';
+            } else if (footer) {
+                footer.style.display = 'none';
+            }
+        }
+
+        function createStarredFooter(userIp, starredImages, isCurrentUser) {
             const footer = document.createElement('div');
             footer.className = 'starred-footer';
             footer.dataset.userIp = userIp;
@@ -1362,9 +1543,11 @@ foreach ($data as $ip => $userData) {
             footer.appendChild(minimizeButton);
 
             const userName = document.createElement('span');
-            userName.className = 'user-name';
+            userName.className = 'user-name ellipsis';
             userName.dataset.userIp = userIp;
-            userName.textContent = document.getElementById('top-user-name').textContent;
+            userName.textContent = isCurrentUser ?
+                document.getElementById('top-user-name').textContent :
+                (userStarredImages && userStarredImages[userIp] ? userStarredImages[userIp].name : userIp);
             footer.appendChild(userName);
 
             const starredListContainer = document.createElement('div');
@@ -1372,35 +1555,37 @@ foreach ($data as $ip => $userData) {
             const starredList = document.createElement('div');
             starredList.className = 'starred-list';
             starredImages.forEach(imageName => {
-                const thumbnail = createThumbnail(imageName);
+                const thumbnail = createThumbnail(imageName, isCurrentUser);
                 starredList.appendChild(thumbnail);
             });
             starredListContainer.appendChild(starredList);
             footer.appendChild(starredListContainer);
 
-            const footerButtons = document.createElement('div');
-            footerButtons.className = 'footer-buttons';
-            footerButtons.innerHTML = `
-                <button class="footer-button download-all-button" title="Download All">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                </button>
-                <button class="footer-button copy-names-button" title="Copy Names">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                </button>
-            `;
-            footer.appendChild(footerButtons);
+            if (isCurrentUser) {
+                const footerButtons = document.createElement('div');
+                footerButtons.className = 'footer-buttons';
+                footerButtons.innerHTML = `
+            <button class="footer-button download-all-button" title="Download All">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </button>
+            <button class="footer-button copy-names-button" title="Copy Names">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+            </button>
+        `;
+                footer.appendChild(footerButtons);
+            }
 
             return footer;
         }
 
-        function createThumbnail(imageName) {
+        function createThumbnail(imageName, isCurrentUser) {
             const thumbnail = document.createElement('div');
             thumbnail.className = 'starred-thumbnail';
             thumbnail.dataset.fullImage = `${baseUrl}${subDir ? '/' + subDir : ''}/${imageName}`;
@@ -1411,20 +1596,22 @@ foreach ($data as $ip => $userData) {
 
             thumbnail.appendChild(img);
 
-            const buttonsContainer = document.createElement('div');
-            buttonsContainer.className = 'thumbnail-buttons';
+            if (isCurrentUser) {
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.className = 'thumbnail-buttons';
 
-            const unstarButton = document.createElement('button');
-            unstarButton.title = 'Unstar';
-            unstarButton.textContent = '★';
-            buttonsContainer.appendChild(unstarButton);
+                const unstarButton = document.createElement('button');
+                unstarButton.title = 'Unstar';
+                unstarButton.textContent = '★';
+                buttonsContainer.appendChild(unstarButton);
 
-            const downloadButton = document.createElement('button');
-            downloadButton.title = 'Download';
-            downloadButton.textContent = '⬇️';
-            buttonsContainer.appendChild(downloadButton);
+                const downloadButton = document.createElement('button');
+                downloadButton.title = 'Download';
+                downloadButton.textContent = '⬇️';
+                buttonsContainer.appendChild(downloadButton);
 
-            thumbnail.appendChild(buttonsContainer);
+                thumbnail.appendChild(buttonsContainer);
+            }
 
             return thumbnail;
         }
@@ -1481,7 +1668,7 @@ foreach ($data as $ip => $userData) {
                 const starredList = userFooter.querySelector('.starred-list');
                 starredList.innerHTML = '';
                 starredImages.forEach(imageName => {
-                    const thumbnail = createThumbnail(imageName);
+                    const thumbnail = createThumbnail(imageName, false);
                     starredList.appendChild(thumbnail);
                 });
                 userFooter.style.display = starredImages.length > 0 ? 'flex' : 'none';
@@ -1505,91 +1692,45 @@ foreach ($data as $ip => $userData) {
             });
         }
 
+        function openModal(containerOrImageName) {
+            console.debug("Opening modal for:", containerOrImageName);
+            let imageName;
+
+            if (typeof containerOrImageName === 'string') {
+                imageName = containerOrImageName;
+                currentImageIndex = -1; // Indicate that this is a footer image
+            } else {
+                imageName = containerOrImageName.dataset.image;
+                currentImageIndex = images.indexOf(containerOrImageName);
+            }
+
+            currentFullImagePath = imageName;
+            console.info("CurrentFullImagePath set to:", currentFullImagePath);
+            updateModal();
+            modal.style.display = 'block';
+        }
+
+        function downloadImage(imageName) {
+            const link = document.createElement('a');
+            link.href = imageName;
+            link.download = imageName.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadImages(imageUrls) {
+            imageUrls.forEach((url, index) => {
+                setTimeout(() => {
+                    downloadImage(url);
+                }, index * 1000);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const gallery = document.querySelector('.gallery');
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            const modalTitle = document.getElementById('modalTitle');
-            const closeBtn = modal.querySelector('.close');
-            const prevBtn = modal.querySelector('.prev');
-            const nextBtn = modal.querySelector('.next');
-            const modalStarButton = document.getElementById('modalStarButton');
-            const modalDownloadButton = document.getElementById('modalDownloadButton');
-            let currentImageIndex = -1;
-            let currentFullImagePath = '';
             initializeModalElements();
-            const images = Array.from(document.querySelectorAll('.image-container'));
-
-            function updateModal() {
-                if (currentImageIndex >= 0) {
-                    const currentImage = images[currentImageIndex];
-                    const imageSrc = currentImage.querySelector('img').dataset.fullImage;
-                    const imageTitle = currentImage.querySelector('.image-title').textContent;
-                    const isStarred = currentImage.classList.contains('starred');
-
-                    modalImg.src = imageSrc;
-                    modalImg.alt = imageTitle;
-                    modalTitle.textContent = imageTitle;
-                    updateStarButton(modalStarButton, isStarred);
-                    modalDownloadButton.href = imageSrc;
-                    modalDownloadButton.download = imageSrc.split('/').pop();
-                    currentFullImagePath = imageSrc.split('/').pop(); // Store only the filename
-
-                    // Update comments
-                    updateModalComments(currentImage);
-
-                    // Show navigation buttons
-                    prevBtn.style.display = 'block';
-                    nextBtn.style.display = 'block';
-                } else {
-                    // Handle case for images not in the current view (e.g., from footer)
-                    const imageSrc = currentFullImagePath;
-                    const imageTitle = imageSrc.split('/').pop();
-
-                    modalImg.src = `${baseUrl}${subDir ? '/' + subDir : ''}/${imageSrc}`;
-                    modalImg.alt = imageTitle;
-                    modalTitle.textContent = imageTitle;
-                    updateStarButton(modalStarButton, true); // Assume starred since it's in the footer
-                    modalDownloadButton.href = modalImg.src;
-                    modalDownloadButton.download = imageTitle;
-
-                    // Clear comments for footer images
-                    const commentContainer = modal.querySelector('.comment-container');
-                    commentContainer.innerHTML = ''; // Clear existing comments
-                    const commentPlaceholder = document.createElement('div');
-                    commentPlaceholder.className = 'comment-placeholder';
-                    commentPlaceholder.textContent = 'Comment';
-                    commentPlaceholder.addEventListener('click', () => editModalComment(currentFullImagePath));
-                    commentContainer.appendChild(commentPlaceholder);
-
-                    // Hide navigation buttons for footer images
-                    prevBtn.style.display = 'none';
-                    nextBtn.style.display = 'none';
-                }
-            }
-
-            function updateModalComments(currentImage) {
-                const commentContainer = modal.querySelector('.comment-container');
-                commentContainer.innerHTML = ''; // Clear existing comments
-
-                const imageComments = currentImage.querySelectorAll('.comment-box');
-                imageComments.forEach(comment => {
-                    const clonedComment = comment.cloneNode(true);
-                    commentContainer.appendChild(clonedComment);
-
-                    if (clonedComment.classList.contains('current-user')) {
-                        clonedComment.addEventListener('click', () => editModalComment(currentImage.dataset.image));
-                    }
-                });
-
-                if (!commentContainer.querySelector('.comment-box.current-user')) {
-                    const commentPlaceholder = document.createElement('div');
-                    commentPlaceholder.className = 'comment-placeholder';
-                    commentPlaceholder.textContent = 'Comment';
-                    commentPlaceholder.addEventListener('click', () => editModalComment(currentImage.dataset.image));
-                    commentContainer.appendChild(commentPlaceholder);
-                }
-            }
+            images = Array.from(document.querySelectorAll('.image-container'));
 
             function editModalComment() {
                 const commentContainer = modal.querySelector('.comment-container');
@@ -1650,19 +1791,6 @@ foreach ($data as $ip => $userData) {
                 input.focus();
             }
 
-            function downloadImages(imageUrls) {
-                imageUrls.forEach((url, index) => {
-                    setTimeout(() => {
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = url.split('/').pop();
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }, index * 1000);
-                });
-            }
-
             function initializeStarredImages() {
                 document.querySelectorAll('.image-container').forEach(container => {
                     const starButton = container.querySelector('.star-button');
@@ -1675,38 +1803,16 @@ foreach ($data as $ip => $userData) {
             }
 
             function navigateModal(direction) {
+                console.debug("Navigating modal, direction:", direction);
                 if (currentImageIndex >= 0) {
                     currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
                     const newImage = images[currentImageIndex];
                     currentFullImagePath = newImage.dataset.image;
                 } else {
-                    console.log("Navigation not available for this image.");
+                    console.warn("Navigation not available for this image.");
                     return;
                 }
                 updateModal();
-            }
-
-            function openModal(containerOrImageName) {
-                let imageContainer;
-                let imageName;
-
-                if (typeof containerOrImageName === 'string') {
-                    imageName = containerOrImageName;
-                    imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
-                } else {
-                    imageContainer = containerOrImageName;
-                    imageName = imageContainer.dataset.image;
-                }
-
-                if (imageContainer) {
-                    currentImageIndex = images.indexOf(imageContainer);
-                } else {
-                    currentImageIndex = -1;
-                }
-
-                currentFullImagePath = imageName;
-                updateModal();
-                modal.style.display = 'block';
             }
 
             function makeNameEditable(nameSpan) {
@@ -1815,7 +1921,8 @@ foreach ($data as $ip => $userData) {
             }
 
             modalStarButton.onclick = function() {
-                toggleStar(currentFullImagePath.replace(/^\//, '')); // Remove leading slash here as well
+                console.debug("Toggling star for image:", currentFullImagePath);
+                toggleStar(currentFullImagePath);
             }
 
             window.onclick = function(e) {
@@ -1895,6 +2002,33 @@ foreach ($data as $ip => $userData) {
 
             // Start the update check
             checkForUpdates();
+
+            // Add event listener for minimize buttons
+            document.querySelectorAll('.minimize-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const footer = this.closest('.starred-footer');
+                    footer.classList.toggle('minimized');
+
+                    // Update button text based on minimized state
+                    this.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
+
+                    // Prevent the click event from bubbling up to the footer
+                    event.stopPropagation();
+                });
+            });
+
+            // Add event listener for starred footers to maximize when clicked if minimized
+            document.querySelectorAll('.starred-footer').forEach(footer => {
+                footer.addEventListener('click', function() {
+                    if (this.classList.contains('minimized')) {
+                        this.classList.remove('minimized');
+                        const minimizeButton = this.querySelector('.minimize-button');
+                        if (minimizeButton) {
+                            minimizeButton.textContent = '▼';
+                        }
+                    }
+                });
+            });
         });
     </script>
 </head>
@@ -1936,10 +2070,13 @@ foreach ($data as $ip => $userData) {
     <div id="footer-spacer"></div>
 
     <div id="imageModal" class="modal">
-        <span class="close" aria-label="Close modal">&times;</span>
-        <span class="prev" aria-label="Previous image">&#10094;</span>
-        <span class="next" aria-label="Next image">&#10095;</span><img class="modal-content" id="modalImage">
-        <div class="modal-info">
+        <div class="modal-content">
+            <span class="close" aria-label="Close modal">&times;</span>
+            <span class="prev" aria-label="Previous image">&#10094;</span>
+            <div class="modal-image-container">
+                <img id="modalImage" alt="Modal image">
+            </div>
+            <span class="next" aria-label="Next image">&#10095;</span>
             <h3 id="modalTitle"></h3>
             <div class="comment-container">
                 <!-- Comments will be dynamically inserted here -->
@@ -1955,10 +2092,8 @@ foreach ($data as $ip => $userData) {
         <?php if (!empty($userStarredImages)): ?>
             <?php foreach ($userStarredImages as $ip => $userData): ?>
                 <div class="starred-footer" data-user-ip="<?php echo $ip; ?>">
-                    <div class="starred-footer-header">
-                        <button class="minimize-button" title="Minimize">▼</button>
-                        <span class="user-name" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
-                    </div>
+                    <button class="minimize-button" title="Minimize">▼</button>
+                    <span class="user-name ellipsis" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
                     <div class="starred-list-container">
                         <div class="starred-list">
                             <?php foreach ($userData['starred_images'] as $image):
