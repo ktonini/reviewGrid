@@ -489,11 +489,12 @@ foreach ($data as $ip => $userData) {
             display: flex;
             flex-direction: column;
             max-height: 50vh;
-            overflow-y: auto;
+            overflow-y: hidden;
             box-shadow: var(--footer-shadow);
             background-color: rgba(44, 44, 44, 0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
+            padding-bottom: 0.625em;
         }
 
         .starred-footer {
