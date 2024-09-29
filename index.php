@@ -1401,6 +1401,7 @@ foreach ($data as $ip => $userData) {
             const copyNamesButton = footer.querySelector('.copy-names-button');
             const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
 
+            // TODO: fix conflict here with global declaration of thhis
             minimizeButton.addEventListener('click', () => {
                 footer.classList.toggle('minimized');
                 minimizeButton.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
