@@ -73,7 +73,8 @@ $images = array_filter($images, function ($key) {
 // Create thumbnails if they don't exist
 foreach ($images as $image) {
     $filename = basename($image);
-    $thumbPath = $thumbsDir . $filename;
+    $thumbFilename = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $filename);
+    $thumbPath = $thumbsDir . $thumbFilename;
 
     if (!file_exists($thumbPath)) {
         createThumbnail($image, $thumbPath, $thumbWidth, $thumbHeight);
@@ -100,21 +101,33 @@ function createThumbnail($source, $destination, $width, $height)
     $tmp = imagecreatetruecolor($width, $height);
     imagecopyresampled($tmp, $image, 0, 0, (int)$x, 0, $width, $height, $w, $h);
 
-    switch (strtolower(pathinfo($source, PATHINFO_EXTENSION))) {
-        case 'jpeg':
-        case 'jpg':
-            imagejpeg($tmp, $destination, 100);
-            break;
-        case 'png':
-            imagepng($tmp, $destination, 9);
-            break;
-        case 'gif':
-            imagegif($tmp, $destination);
-            break;
+    $webpDestination = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $destination);
+
+    if (function_exists('imagewebp')) {
+        // Create WebP thumbnail
+        imagewebp($tmp, $webpDestination, 80); // 80 is the quality (0-100)
+        $thumbnailName = basename($webpDestination);
+    } else {
+        // Fallback to original format if WebP is not supported
+        switch (strtolower(pathinfo($source, PATHINFO_EXTENSION))) {
+            case 'jpeg':
+            case 'jpg':
+                imagejpeg($tmp, $destination, 90);
+                break;
+            case 'png':
+                imagepng($tmp, $destination, 9);
+                break;
+            case 'gif':
+                imagegif($tmp, $destination);
+                break;
+        }
+        $thumbnailName = basename($destination);
     }
 
     imagedestroy($image);
     imagedestroy($tmp);
+
+    return $thumbnailName; // Return the name of the created thumbnail
 }
 
 // Function to generate a title from filename
@@ -200,7 +213,8 @@ function handleCheckUpdates()
 function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data, $user_ip, $baseUrl, $relativeThumbsUrl)
 {
     $filename = basename($image);
-    $thumbPath = $relativeThumbsUrl . '/' . $filename;
+    $thumbFilename = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $filename);
+    $thumbPath = $relativeThumbsUrl . '/' . $thumbFilename;
     $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $filename;
     $isStarred = in_array($filename, $starredImages);
     $title = generateTitle($filename);
@@ -1025,6 +1039,7 @@ foreach ($data as $ip => $userData) {
             if (currentImageIndex >= 0) {
                 const currentImage = images[currentImageIndex];
                 const imageSrc = currentImage.querySelector('img').dataset.fullImage;
+                const thumbnailSrc = imageSrc.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
                 const imageTitle = currentImage.querySelector('.image-title').textContent;
                 const isStarred = currentImage.classList.contains('starred');
 
@@ -1045,6 +1060,7 @@ foreach ($data as $ip => $userData) {
             } else {
                 // Handle case for images not in the current view (e.g., from footer)
                 const imageTitle = currentFullImagePath.split('/').pop();
+                const thumbnailSrc = `${relativeThumbsUrl}/${imageTitle.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp')}`;
 
                 modalImg.src = `${baseUrl}${subDir ? '/' + subDir : ''}/${currentFullImagePath}`;
                 modalImg.alt = imageTitle;
@@ -1588,7 +1604,8 @@ foreach ($data as $ip => $userData) {
             thumbnail.dataset.fullImage = `${baseUrl}${subDir ? '/' + subDir : ''}/${imageName}`;
 
             const img = document.createElement('img');
-            img.src = `${relativeThumbsUrl}/${imageName}`;
+            const webpImageName = imageName.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+            img.src = `${relativeThumbsUrl}/${webpImageName}`;
             img.alt = imageName;
 
             thumbnail.appendChild(img);
@@ -1669,8 +1686,8 @@ foreach ($data as $ip => $userData) {
                     starredList.appendChild(thumbnail);
                 });
                 userFooter.style.display = starredImages.length > 0 ? 'grid' : 'none';
+                addFooterEventListeners(userFooter);
             }
-            addFooterEventListeners(userFooter);
         }
 
         function updateUserName(userIp, newName) {
@@ -2095,7 +2112,7 @@ foreach ($data as $ip => $userData) {
                     <div class="starred-list-container">
                         <div class="starred-list">
                             <?php foreach ($userData['starred_images'] as $image):
-                                $thumbPath = $relativeThumbsUrl . '/' . $image;
+                                $thumbPath = $relativeThumbsUrl . '/' . preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $image);
                                 $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $image;
                             ?>
                                 <div class="starred-thumbnail" data-full-image="<?php echo $fullImagePath; ?>">
