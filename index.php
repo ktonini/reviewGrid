@@ -39,9 +39,19 @@ $data = file_exists($usersFile) ? json_decode(file_get_contents($usersFile), tru
 if (!isset($data[$user_ip])) {
     $data[$user_ip] = [
         'name' => $user_ip,
-        'starred_images' => []
+        'starred_images' => [],
+        'footer_minimized' => false  // Add this line
     ];
     file_put_contents($usersFile, json_encode($data));
+}
+
+// Add a new function to handle footer state updates
+function handleFooterStateUpdate() {
+    global $data, $user_ip, $usersFile;
+    $minimized = $_POST['minimized'] === 'true';
+    $data[$user_ip]['footer_minimized'] = $minimized;
+    file_put_contents($usersFile, json_encode($data));
+    echo json_encode(['success' => true]);
 }
 
 // Handle POST requests
@@ -52,6 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         handleToggleStar();
     } elseif (isset($_POST['add_comment'])) {
         handleAddComment();
+    } elseif (isset($_POST['update_footer_state'])) {  // Add this condition
+        handleFooterStateUpdate();
     }
     exit;
 }
@@ -230,8 +242,8 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
                 <div class="comment-placeholder">Comment</div>
             </div>
             <div class="button-container">
-                <button class="star-button" title="Star" aria-label="Star image">★</button>
-                <a href="<?php echo $fullImagePath; ?>" download class="download-button" title="Download" aria-label="Download image">⬇</a>
+                <button class="button star-button" title="Star" aria-label="Star image">★</button>
+                <a href="<?php echo $fullImagePath; ?>" download class="button download-button" title="Download" aria-label="Download image">⬇</a>
             </div>
         </div>
     </div>
@@ -247,12 +259,32 @@ function generateCommentBoxes($filename, $data, $current_user_ip)
             $userName = htmlspecialchars($userData['name']);
             $comment = htmlspecialchars($userData['comments'][$filename]);
             $isCurrentUser = $ip === $current_user_ip;
+            $userColor = generateColorFromIP($ip);
             echo "<div class='comment-box" . ($isCurrentUser ? " current-user" : "") . "' data-user-ip='$ip'>";
-            echo "<span class='comment-user' data-user-ip='$ip'>$userName:</span>";
+            echo "<span class='comment-user' data-user-ip='$ip' style='color: $userColor;'>$userName:</span>";
             echo "<span class='comment'>$comment</span>";
             echo "</div>";
         }
     }
+}
+
+// Function to generate a color from an IP address
+function generateColorFromIP($ip) {
+    $hash = md5($ip);
+    $color = substr($hash, 0, 6);
+    
+    // Ensure the color is not too dark
+    $r = hexdec(substr($color, 0, 2));
+    $g = hexdec(substr($color, 2, 2));
+    $b = hexdec(substr($color, 4, 2));
+    
+    while ($r + $g + $b < 382) {  // 382 is arbitrary, adjust for desired brightness
+        $r = min(255, $r + 30);
+        $g = min(255, $g + 30);
+        $b = min(255, $b + 30);
+    }
+    
+    return sprintf("#%02x%02x%02x", $r, $g, $b);
 }
 
 // After loading the $data array, add this:
@@ -372,13 +404,11 @@ foreach ($data as $ip => $userData) {
             padding-top: 0.625em;
         }
 
-        .download-button:hover,
-        .star-button:hover {
+        .button:hover {
             background-color: #444;
         }
 
-        .star-button,
-        .download-button {
+        .button {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -426,27 +456,34 @@ foreach ($data as $ip => $userData) {
             border-radius: 10px;
         }
 
-        .close {
-            grid-column: 3;
-            grid-row: 1;
+        .button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 2em;
+            height: 2em;
+            overflow: hidden;
+            border: none;
+            background-color: #333;
             font-size: 2em;
             cursor: pointer;
             align-self: center;
             justify-self: center;
         }
 
+        .close {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
         .prev {
             grid-column: 1;
-            grid-row: 2;
-            align-self: center;
-            justify-self: center;
+            grid-row: 2 / 5;
         }
 
         .next {
             grid-column: 3;
-            grid-row: 2;
-            align-self: center;
-            justify-self: center;
+            grid-row: 2 / 5;
         }
 
         .modal-image-container {
@@ -465,10 +502,13 @@ foreach ($data as $ip => $userData) {
         }
 
         #modalTitle {
-            grid-column: 1 / -1;
-            grid-row: 3;
+            grid-column: 2;
+            grid-row: 1;
             text-align: center;
             margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .comment-container {
@@ -692,28 +732,6 @@ foreach ($data as $ip => $userData) {
             }
         }
 
-        #nameModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-        }
-
-        #nameModal .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 80%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
         #nameInput {
             width: 100%;
             padding: 0.625em;
@@ -797,10 +815,10 @@ foreach ($data as $ip => $userData) {
         .comment-container {
             margin-top: 0.625em;
             padding: 0.5em;
-            background-color: #2a2a2a;
+            /* background-color: #2a2a2a; */
             border-radius: 0.5em;
-            box-shadow: 0 0.0625em 0.1875em rgba(0, 0, 0, 0.3);
-            width: calc(100% - 0.9375em);
+            /* box-shadow: 0 0.0625em 0.1875em rgba(0, 0, 0, 0.3); */
+            /* width: calc(100% - 0.9375em); */
             font-size: 0.8em;
             display: flex;
             flex-direction: column;
@@ -809,16 +827,15 @@ foreach ($data as $ip => $userData) {
 
         .comment-box {
             padding: 0.375em 0.5em;
-            background-color: #333333;
+            background-color: #1f1f1f;
             border-radius: 0.375em;
             box-shadow: 0 0.0625em 0.125em rgba(0, 0, 0, 0.2);
-            display: flex;
+            /* display: flex; */
             align-items: baseline;
         }
 
         .comment-user {
             font-weight: bold;
-            color: #b0b0b0;
             margin-right: 0.3125em;
             white-space: nowrap;
         }
@@ -828,6 +845,8 @@ foreach ($data as $ip => $userData) {
             font-style: italic;
             cursor: pointer;
             padding: 0.375em 0.5em;
+            border: 1px dashed #808080;
+            border-radius: 0.25em;
         }
 
         textarea {
@@ -841,36 +860,16 @@ foreach ($data as $ip => $userData) {
         }
 
         .current-user .comment-user {
-            color: #e0e0e0;
+            color: #81cfff;
         }
 
-        .current-user {
+        /* .current-user {
             background-color: #3c3c3c;
-        }
+        } */
 
         .comment-box,
         .comment-placeholder {
             transition: background-color 0.2s ease;
-        }
-
-        .more-link {
-            color: #888;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .more-link:hover {
-            text-decoration: underline;
-        }
-
-        .minimize-button {
-            background: none;
-            border: none;
-            color: var(--button-color);
-            cursor: pointer;
-            font-size: 16px;
-            padding: 5px;
-            transition: transform 0.2s ease;
         }
 
         .minimize-button:hover {
@@ -999,6 +998,16 @@ foreach ($data as $ip => $userData) {
         body {
             padding-top: 60px;
         }
+
+        .starred-footer.minimized .starred-list-container,
+        .starred-footer.minimized .footer-buttons {
+            display: none;
+        }
+
+        .starred-footer.minimized {
+            grid-template-columns: auto 1fr;
+            grid-template-areas: "minimize user";
+        }
     </style>
     <script>
         let initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
@@ -1055,8 +1064,8 @@ foreach ($data as $ip => $userData) {
                 updateModalComments(currentImage);
 
                 // Show navigation buttons
-                prevBtn.style.display = 'block';
-                nextBtn.style.display = 'block';
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
             } else {
                 // Handle case for images not in the current view (e.g., from footer)
                 const imageTitle = currentFullImagePath.split('/').pop();
@@ -1365,8 +1374,9 @@ foreach ($data as $ip => $userData) {
                     commentContainer.appendChild(userCommentBox);
                 }
 
+                const userColor = '<?php echo generateColorFromIP($user_ip); ?>';
                 userCommentBox.innerHTML = `
-                <span class="comment-user"><?php echo htmlspecialchars($data[$user_ip]['name']); ?>:</span>
+                <span class="comment-user" style="color: ${userColor};"><?php echo htmlspecialchars($data[$user_ip]['name']); ?>:</span>
                 <span class="comment">${comment}</span>
             `;
 
@@ -1418,10 +1428,10 @@ foreach ($data as $ip => $userData) {
             const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
 
             // TODO: fix conflict here with global declaration of thhis
-            minimizeButton.addEventListener('click', () => {
-                footer.classList.toggle('minimized');
-                minimizeButton.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
-            });
+            // minimizeButton.addEventListener('click', () => {
+            //     footer.classList.toggle('minimized');
+            //     minimizeButton.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
+            // });
 
             thumbnails.forEach(thumbnail => {
                 const imageName = thumbnail.dataset.fullImage.split('/').pop();
@@ -1536,6 +1546,15 @@ foreach ($data as $ip => $userData) {
                         const thumbnail = createThumbnail(imageName, isCurrentUser);
                         starredList.appendChild(thumbnail);
                     });
+                    
+                    // Maintain minimized state for other users
+                    if (!isCurrentUser && !footer.classList.contains('minimized')) {
+                        footer.classList.add('minimized');
+                        const minimizeButton = footer.querySelector('.minimize-button');
+                        if (minimizeButton) {
+                            minimizeButton.textContent = '▲';
+                        }
+                    }
                 }
                 addFooterEventListeners(footer);
                 footer.style.display = 'grid';
@@ -1547,12 +1566,15 @@ foreach ($data as $ip => $userData) {
         function createStarredFooter(userIp, starredImages, isCurrentUser) {
             const footer = document.createElement('div');
             footer.className = 'starred-footer';
+            if (!isCurrentUser) {
+                footer.classList.add('minimized');  // Add this line
+            }
             footer.dataset.userIp = userIp;
 
             const minimizeButton = document.createElement('button');
             minimizeButton.className = 'minimize-button';
             minimizeButton.title = 'Minimize';
-            minimizeButton.textContent = '▼';
+            minimizeButton.textContent = isCurrentUser ? '▼' : '▲';  // Change this line
             footer.appendChild(minimizeButton);
 
             const userName = document.createElement('span');
@@ -1824,8 +1846,18 @@ foreach ($data as $ip => $userData) {
                     const newImage = images[currentImageIndex];
                     currentFullImagePath = newImage.dataset.image;
                 } else {
-                    console.warn("Navigation not available for this image.");
-                    return;
+                    // For images opened from footer
+                    const allImages = Array.from(document.querySelectorAll('.image-container'));
+                    const currentIndex = allImages.findIndex(img => img.dataset.image === currentFullImagePath);
+                    if (currentIndex !== -1) {
+                        const newIndex = (currentIndex + direction + allImages.length) % allImages.length;
+                        const newImage = allImages[newIndex];
+                        currentFullImagePath = newImage.dataset.image;
+                        currentImageIndex = images.indexOf(newImage);
+                    } else {
+                        console.warn("Navigation not available for this image.");
+                        return;
+                    }
                 }
                 updateModal();
             }
@@ -1958,6 +1990,16 @@ foreach ($data as $ip => $userData) {
                 }
             });
 
+            const modalImageContainer = document.querySelector('.modal-image-container');
+            modalImageContainer.addEventListener('wheel', function(e) {
+                e.preventDefault(); // Prevent default scrolling behavior
+                if (e.deltaY > 0) {
+                    navigateModal(1); // Scroll down, go to next image
+                } else {
+                    navigateModal(-1); // Scroll up, go to previous image
+                }
+            });
+
             const logo = document.querySelector('#logo-container svg');
             logo.addEventListener('click', function() {
                 window.location.href = '/';
@@ -2086,19 +2128,19 @@ foreach ($data as $ip => $userData) {
 
     <div id="imageModal" class="modal">
         <div class="modal-content">
-            <span class="close" aria-label="Close modal">&times;</span>
-            <span class="prev" aria-label="Previous image">&#10094;</span>
+            <h3 id="modalTitle"></h3>
+            <span class="button close" aria-label="Close modal">&times;</span>
+            <span class="button prev" aria-label="Previous image">&#10094;</span>
             <div class="modal-image-container">
                 <img id="modalImage" alt="Modal image">
             </div>
-            <span class="next" aria-label="Next image">&#10095;</span>
-            <h3 id="modalTitle"></h3>
+            <span class="button next" aria-label="Next image">&#10095;</span>
             <div class="comment-container">
                 <!-- Comments will be dynamically inserted here -->
             </div>
             <div class="button-container">
-                <button id="modalStarButton" class="star-button" title="Star" aria-label="Star image">★</button>
-                <a id="modalDownloadButton" href="#" download class="download-button" title="Download" aria-label="Download image">⬇</a>
+                <button id="modalStarButton" class="button star-button" title="Star" aria-label="Star image">★</button>
+                <a id="modalDownloadButton" href="#" download class="button download-button" title="Download" aria-label="Download image">⬇</a>
             </div>
         </div>
     </div>
@@ -2106,8 +2148,8 @@ foreach ($data as $ip => $userData) {
     <div id="starred-footers-container">
         <?php if (!empty($userStarredImages)): ?>
             <?php foreach ($userStarredImages as $ip => $userData): ?>
-                <div class="starred-footer" data-user-ip="<?php echo $ip; ?>">
-                    <button class="minimize-button" title="Minimize">▼</button>
+                <div class="starred-footer <?php echo $ip !== $user_ip ? 'minimized' : ''; ?>" data-user-ip="<?php echo $ip; ?>">
+                    <button class="minimize-button" title="Minimize"><?php echo $ip !== $user_ip ? '▲' : '▼'; ?></button>
                     <span class="user-name ellipsis" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
                     <div class="starred-list-container">
                         <div class="starred-list">
