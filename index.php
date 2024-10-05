@@ -838,6 +838,7 @@ foreach ($data as $ip => $userData) {
             font-weight: bold;
             margin-right: 0.3125em;
             white-space: nowrap;
+            color: var(--star-color);
         }
 
         .comment-placeholder {

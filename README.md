@@ -59,4 +59,5 @@ The `.gitignore` file is set up to ignore all files except for:
 
 ReviewGrid uses IP addresses to identify users:
 - Each unique IP address is treated as a separate user
-- This allows for persistent actions without requiring user accounts
+- This allows for persistent actions without requiring user accounts but naturally comes with a few caveats.
+  
