@@ -5,7 +5,7 @@ ReviewGrid is a lightweight, single-file PHP application designed for quick and 
 
 ## Screenshot
 
-![ReviewGrid Screenshot](https://raw.githubusercontent.com/ktonini/reviewGrid/_data/reviewGrid.png)
+![ReviewGrid Screenshot](_data/reviewGrid-min.png)
 
 This screenshot showcases the main interface of ReviewGrid, displaying the image gallery with commenting and starring functionality.
 
