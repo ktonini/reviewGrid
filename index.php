@@ -1423,8 +1423,90 @@ foreach ($data as $ip => $userData) {
         }
 
         function generateColorFromIP(ip) {
-            // Implement this function to generate a consistent color for each IP
-            // You can use the same logic as in the PHP function
+            // Simple hash function to replace md5
+            function simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32-bit integer
+                }
+                return Math.abs(hash).toString(16).padStart(6, '0');
+            }
+
+            const hash = simpleHash(ip);
+            let color = hash.substr(0, 6);
+
+            // Convert to HSL for easier manipulation
+            let r = parseInt(color.substr(0, 2), 16);
+            let g = parseInt(color.substr(2, 2), 16);
+            let b = parseInt(color.substr(4, 2), 16);
+
+            // Convert RGB to HSL
+            r /= 255;
+            g /= 255;
+            b /= 255;
+            const max = Math.max(r, g, b),
+                min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r:
+                        h = (g - b) / d + (g < b ? 6 : 0);
+                        break;
+                    case g:
+                        h = (b - r) / d + 2;
+                        break;
+                    case b:
+                        h = (r - g) / d + 4;
+                        break;
+                }
+                h /= 6;
+            }
+
+            // Adjust for pastel
+            s = Math.min(s * 100, 60); // Reduce saturation
+            l = Math.max(l * 100, 70); // Increase lightness
+
+            // Convert back to RGB
+            const c = (1 - Math.abs(2 * l / 100 - 1)) * s / 100;
+            const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+            const m = l / 100 - c / 2;
+            let [r1, g1, b1] = [0, 0, 0];
+
+            if (0 <= h && h < 1 / 6) {
+                [r1, g1, b1] = [c, x, 0];
+            } else if (1 / 6 <= h && h < 2 / 6) {
+                [r1, g1, b1] = [x, c, 0];
+            } else if (2 / 6 <= h && h < 3 / 6) {
+                [r1, g1, b1] = [0, c, x];
+            } else if (3 / 6 <= h && h < 4 / 6) {
+                [r1, g1, b1] = [0, x, c];
+            } else if (4 / 6 <= h && h < 5 / 6) {
+                [r1, g1, b1] = [x, 0, c];
+            } else {
+                [r1, g1, b1] = [c, 0, x];
+            }
+
+            r = Math.round((r1 + m) * 255);
+            g = Math.round((g1 + m) * 255);
+            b = Math.round((b1 + m) * 255);
+
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        function setTopUserNameColor() {
+            const topUserName = document.getElementById('top-user-name');
+            if (topUserName) {
+                const userIp = topUserName.dataset.userIp;
+                const userColor = generateColorFromIP(userIp);
+                topUserName.style.color = userColor;
+            }
         }
 
         function createCommentPlaceholder(container, isModal) {
@@ -1961,6 +2043,10 @@ foreach ($data as $ip => $userData) {
             const userNameElements = document.querySelectorAll(`.user-name[data-user-ip="${userIp}"]`);
             userNameElements.forEach(el => {
                 el.textContent = newName;
+                if (el.id === 'top-user-name') {
+                    const userColor = generateColorFromIP(userIp);
+                    el.style.color = userColor;
+                }
             });
         }
 
@@ -2189,6 +2275,8 @@ foreach ($data as $ip => $userData) {
                 const topUserName = document.getElementById('top-user-name');
                 if (topUserName) {
                     topUserName.textContent = newName;
+                    const userColor = generateColorFromIP(currentUserIp);
+                    topUserName.style.color = userColor;
                 }
 
                 const footerUserName = document.querySelector(`.starred-footer[data-user-ip="${currentUserIp}"] .user-name`);
@@ -2370,6 +2458,9 @@ foreach ($data as $ip => $userData) {
 
             // Call updateFooterSpacerHeight initially
             updateFooterSpacerHeight();
+
+            // Set the initial color for the top-user-name
+            setTopUserNameColor();
         });
     </script>
 </head>
