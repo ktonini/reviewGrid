@@ -351,7 +351,7 @@ foreach ($data as $ip => $userData) {
             background-color: var(--card-bg);
             border-radius: 0.5em;
             overflow: hidden;
-            box-shadow: 0 0.25em 0.375em rgba(0, 0, 0, 0.3);
+            /* box-shadow: 0 0.25em 0.375em rgba(0, 0, 0, 0.3); */
             transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border 0.2s ease;
             cursor: pointer;
             display: flex;
@@ -361,13 +361,15 @@ foreach ($data as $ip => $userData) {
 
         .image-container:hover {
             /* transform: translateY(-0.3125em); */
-            box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.4);
+            /* box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.4); */
         }
 
         .image-container.starred {
             background-color: var(--starred-bg);
             box-shadow: 0 0.375em 0.75em rgba(0, 0, 0, 0.5);
-            border: 0.25em solid var(--star-color);
+            /* border: 0.25em solid var(--star-color); */
+            transform: scale(1.02);
+            transition: transform 0.2s ease;
         }
 
         .image-container.starred:hover {

@@ -10,9 +10,14 @@ ReviewGrid is a lightweight, single-file PHP application designed for quick and 
 - Instant gallery creation: Automatically generates a gallery from images in the directory
 - JSON-based data storage: Uses a simple JSON file as a lightweight database
 - User identification by IP: Allows for persistent user actions without login
+    - Each unique IP address is treated as a separate user
+    - This allows for persistent actions without requiring user accounts but naturally comes with obvious caveats.
 - Interactive features: Commenting and starring functionality
 - Responsive design: Adapts to various screen sizes for optimal viewing
 - Easy cleanup: Remove the PHP file and `_data` folder to revert to the original image directory
+- Real-time updates: Changes made by any user are instantly reflected for all other users without page refresh
+  - Implemented using periodic AJAX requests to check for updates
+  - Client-side JavaScript updates the UI dynamically when changes are detected
 
 ReviewGrid is perfect for quickly sharing and reviewing sets of images, whether for personal use, client presentations, or collaborative projects. Its self-contained nature means you can easily move, copy, or delete the gallery without complex setup or teardown procedures.
 
@@ -54,10 +59,3 @@ The `.gitignore` file is set up to ignore all files except for:
 - `.gitignore`
 - `index.php`
 - `_data/` directory (excluding `thumbs/*` and `starred_images.txt`)
-
-## User Identification
-
-ReviewGrid uses IP addresses to identify users:
-- Each unique IP address is treated as a separate user
-- This allows for persistent actions without requiring user accounts but naturally comes with a few caveats.
-  
