@@ -46,7 +46,8 @@ if (!isset($data[$user_ip])) {
 }
 
 // Add a new function to handle footer state updates
-function handleFooterStateUpdate() {
+function handleFooterStateUpdate()
+{
     global $data, $user_ip, $usersFile;
     $minimized = $_POST['minimized'] === 'true';
     $data[$user_ip]['footer_minimized'] = $minimized;
@@ -190,16 +191,22 @@ function handleAddComment()
     if (!isset($data[$user_ip]['comments'])) {
         $data[$user_ip]['comments'] = [];
     }
+    if (!isset($data[$user_ip]['comment_timestamps'])) {
+        $data[$user_ip]['comment_timestamps'] = [];
+    }
     if (!empty($comment)) {
         $data[$user_ip]['comments'][$image] = $comment;
+        $data[$user_ip]['comment_timestamps'][$image] = time();
     } else {
         unset($data[$user_ip]['comments'][$image]);
+        unset($data[$user_ip]['comment_timestamps'][$image]);
     }
     $result = file_put_contents($usersFile, json_encode($data));
     echo json_encode([
         'success' => ($result !== false),
         'comment' => $comment,
-        'name' => $data[$user_ip]['name']
+        'name' => $data[$user_ip]['name'],
+        'timestamp' => $data[$user_ip]['comment_timestamps'][$image] ?? time()
     ]);
 }
 
@@ -237,9 +244,12 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
         <img src="<?php echo $thumbPath; ?>" alt="<?php echo $title; ?>" data-full-image="<?php echo $fullImagePath; ?>">
         <div class="image-info">
             <h3 class="image-title ellipsis" title="<?php echo $title; ?>"><?php echo $title; ?></h3>
-            <div class="comment-container">
-                <?php generateCommentBoxes($filename, $data, $user_ip); ?>
-                <div class="comment-placeholder">Comment</div>
+            <div class="comment-container-wrapper">
+                <div class="comment-container">
+                    <?php generateCommentBoxes($filename, $data, $user_ip); ?>
+                    <div class="comment-placeholder">Comment</div>
+                </div>
+                <div class="comment-shadow"></div>
             </div>
             <div class="button-container">
                 <button class="button star-button" title="Star" aria-label="Star image">★</button>
@@ -254,36 +264,50 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
 // Function to generate comment boxes
 function generateCommentBoxes($filename, $data, $current_user_ip)
 {
+    $comments = [];
     foreach ($data as $ip => $userData) {
         if (isset($userData['comments'][$filename])) {
-            $userName = htmlspecialchars($userData['name']);
-            $comment = htmlspecialchars($userData['comments'][$filename]);
-            $isCurrentUser = $ip === $current_user_ip;
-            $userColor = generateColorFromIP($ip);
-            echo "<div class='comment-box" . ($isCurrentUser ? " current-user" : "") . "' data-user-ip='$ip'>";
-            echo "<span class='comment-user' data-user-ip='$ip' style='color: $userColor;'>$userName:</span>";
-            echo "<span class='comment'>$comment</span>";
-            echo "</div>";
+            $comments[] = [
+                'ip' => $ip,
+                'name' => htmlspecialchars($userData['name']),
+                'comment' => htmlspecialchars($userData['comments'][$filename]),
+                'timestamp' => $userData['comment_timestamps'][$filename] ?? 0
+            ];
         }
+    }
+
+    // Sort comments by timestamp, oldest first
+    usort($comments, function ($a, $b) {
+        return $a['timestamp'] - $b['timestamp'];
+    });
+
+    foreach ($comments as $comment) {
+        $isCurrentUser = $comment['ip'] === $current_user_ip;
+        $userColor = generateColorFromIP($comment['ip']);
+        echo "<div class='comment-box" . ($isCurrentUser ? " current-user" : "") . "' data-user-ip='{$comment['ip']}'>";
+        echo "<span class='comment-user' data-user-ip='{$comment['ip']}' style='color: $userColor;'>{$comment['name']}:</span>";
+        echo "<span class='comment'>{$comment['comment']}</span>";
+        echo "</div>";
     }
 }
 
 // Function to generate a color from an IP address
-function generateColorFromIP($ip) {
+function generateColorFromIP($ip)
+{
     $hash = md5($ip);
     $color = substr($hash, 0, 6);
-    
+
     // Ensure the color is not too dark
     $r = hexdec(substr($color, 0, 2));
     $g = hexdec(substr($color, 2, 2));
     $b = hexdec(substr($color, 4, 2));
-    
+
     while ($r + $g + $b < 382) {  // 382 is arbitrary, adjust for desired brightness
         $r = min(255, $r + 30);
         $g = min(255, $g + 30);
         $b = min(255, $b + 30);
     }
-    
+
     return sprintf("#%02x%02x%02x", $r, $g, $b);
 }
 
@@ -359,10 +383,10 @@ foreach ($data as $ip => $userData) {
             border: 0.25em solid transparent;
         }
 
-        .image-container:hover {
-            /* transform: translateY(-0.3125em); */
-            /* box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.4); */
-        }
+        /* .image-container:hover {
+            transform: translateY(-0.3125em);
+            box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.4);
+        } */
 
         .image-container.starred {
             background-color: var(--starred-bg);
@@ -445,8 +469,8 @@ foreach ($data as $ip => $userData) {
 
         .modal-content {
             display: grid;
-            grid-template-rows: auto 1fr auto auto auto;
-            grid-template-columns: 3em 1fr 3em;
+            grid-template-rows: auto 1fr auto;
+            grid-template-columns: 3em 3fr 1fr 3em;
             gap: 10px;
             width: 100%;
             height: 100%;
@@ -474,18 +498,18 @@ foreach ($data as $ip => $userData) {
         }
 
         .close {
-            grid-column: 3;
+            grid-column: 4;
             grid-row: 1;
         }
 
         .prev {
             grid-column: 1;
-            grid-row: 2 / 5;
+            grid-row: 2;
         }
 
         .next {
-            grid-column: 3;
-            grid-row: 2 / 5;
+            grid-column: 4;
+            grid-row: 2;
         }
 
         .modal-image-container {
@@ -493,8 +517,9 @@ foreach ($data as $ip => $userData) {
             grid-row: 2;
             display: flex;
             justify-content: center;
-            align-items: center;
+            /* align-items: center; */
             overflow: hidden;
+            margin: 1em;
         }
 
         #modalImage {
@@ -504,7 +529,7 @@ foreach ($data as $ip => $userData) {
         }
 
         #modalTitle {
-            grid-column: 2;
+            grid-column: 2 / 4;
             grid-row: 1;
             text-align: center;
             margin: 0;
@@ -514,15 +539,16 @@ foreach ($data as $ip => $userData) {
         }
 
         .comment-container {
-            grid-column: 2 / -2;
-            grid-row: 4;
+            grid-column: 3;
+            grid-row: 2;
             overflow-y: auto;
-            max-height: 150px;
+            max-height: 100%;
+            /* padding-right: 10px; */
         }
 
         .button-container {
-            grid-column: 1 / -1;
-            grid-row: 5;
+            grid-column: 1 / 5;
+            grid-row: 3;
             display: flex;
             justify-content: space-between;
         }
@@ -815,12 +841,7 @@ foreach ($data as $ip => $userData) {
         }
 
         .comment-container {
-            margin-top: 0.625em;
-            padding: 0.5em;
-            /* background-color: #2a2a2a; */
             border-radius: 0.5em;
-            /* box-shadow: 0 0.0625em 0.1875em rgba(0, 0, 0, 0.3); */
-            /* width: calc(100% - 0.9375em); */
             font-size: 0.8em;
             display: flex;
             flex-direction: column;
@@ -849,7 +870,7 @@ foreach ($data as $ip => $userData) {
             cursor: pointer;
             padding: 0.375em 0.5em;
             border: 1px dashed #808080;
-            border-radius: 0.25em;
+            border-radius: 0.5em;
         }
 
         textarea {
@@ -1010,6 +1031,119 @@ foreach ($data as $ip => $userData) {
         .starred-footer.minimized {
             grid-template-columns: auto 1fr;
             grid-template-areas: "minimize user";
+        }
+
+        .image-container .comment-container-wrapper {
+            position: relative;
+            max-height: 150px;
+            /* Adjust this value as needed */
+            margin-bottom: 10px;
+            /* Add some space below the comment area */
+            border-radius: 0.5em;
+            overflow: hidden;
+        }
+
+        .image-container .comment-container {
+            max-height: 130px;
+            /* Reduced to account for shadow */
+            overflow-y: auto;
+            border-radius: 0.5em;
+            font-size: 0.8em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5em;
+            box-sizing: border-box;
+            /* Include padding in the element's total width and height */
+        }
+
+        .comment-shadow {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to bottom, transparent, rgba(44, 44, 44, 0.9));
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-bottom-left-radius: 0.5em;
+            border-bottom-right-radius: 0.5em;
+        }
+
+        .image-container .comment-container-wrapper.scrollable .comment-shadow {
+            opacity: 1;
+        }
+
+        /* Ensure the comment boxes within the container don't have their own scroll */
+        .image-container .comment-box {
+            overflow: visible;
+        }
+
+        /* Adjust scrollbar styles */
+        .image-container .comment-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .image-container .comment-container::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .image-container .comment-container::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
+        @media screen and (max-width: 1819px) {
+            .modal-content {
+                grid-template-columns: 3em 1fr 3em;
+                grid-template-rows: auto 1fr auto auto;
+            }
+
+            #modalTitle {
+                grid-column: 2;
+                grid-row: 1;
+            }
+
+            .close {
+                grid-column: 3;
+                grid-row: 1;
+            }
+
+            .prev {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            .modal-image-container {
+                grid-column: 2;
+                grid-row: 2;
+            }
+
+            .next {
+                grid-column: 3;
+                grid-row: 2;
+            }
+
+            .comment-container {
+                grid-column: 2;
+                grid-row: 3;
+                max-height: 30vh;
+                overflow-y: auto;
+            }
+
+            .button-container {
+                grid-column: 2;
+                grid-row: 4;
+            }
+        }
+
+        /* Adjust the modal image size for smaller screens */
+        @media screen and (max-width: 1819px) {
+            #modalImage {
+                max-height: 60vh;
+                width: auto;
+                margin: 0 auto;
+            }
         }
     </style>
     <script>
@@ -1197,12 +1331,41 @@ foreach ($data as $ip => $userData) {
         }
 
         function updateCommentUI(container, newComments, isModal = false) {
-            let commentContainer = container.querySelector('.comment-container') || createCommentContainer(container);
+            let commentContainerWrapper = container.querySelector('.comment-container-wrapper');
+            if (!commentContainerWrapper) {
+                commentContainerWrapper = document.createElement('div');
+                commentContainerWrapper.className = 'comment-container-wrapper';
+                container.querySelector('.image-info').insertBefore(commentContainerWrapper, container.querySelector('.button-container'));
+            }
+
+            let commentContainer = commentContainerWrapper.querySelector('.comment-container');
+            if (!commentContainer) {
+                commentContainer = document.createElement('div');
+                commentContainer.className = 'comment-container';
+                commentContainerWrapper.appendChild(commentContainer);
+            }
+
             commentContainer.innerHTML = '';
 
-            Object.entries(newComments).forEach(([userIp, userData]) => {
-                if (userData.comment && userData.comment.trim() !== '') {
-                    const commentBox = createCommentBox(userIp, userData);
+            let comments = Object.entries(newComments).map(([userIp, userData]) => ({
+                userIp,
+                ...userData,
+                timestamp: userData.timestamp || 0
+            }));
+
+            // Sort comments by timestamp, oldest first
+            comments.sort((a, b) => a.timestamp - b.timestamp);
+
+            comments.forEach(({
+                userIp,
+                name,
+                comment
+            }) => {
+                if (comment && comment.trim() !== '') {
+                    const commentBox = createCommentBox(userIp, {
+                        name,
+                        comment
+                    });
                     commentContainer.appendChild(commentBox);
                 }
             });
@@ -1211,30 +1374,57 @@ foreach ($data as $ip => $userData) {
                 const commentPlaceholder = createCommentPlaceholder(container, isModal);
                 commentContainer.appendChild(commentPlaceholder);
             }
-        }
 
-        function createCommentContainer(container) {
-            const commentContainer = document.createElement('div');
-            commentContainer.className = 'comment-container';
-            container.appendChild(commentContainer);
-            return commentContainer;
+            // Add shadow element if it doesn't exist
+            let shadowElement = commentContainerWrapper.querySelector('.comment-shadow');
+            if (!shadowElement) {
+                shadowElement = document.createElement('div');
+                shadowElement.className = 'comment-shadow';
+                commentContainerWrapper.appendChild(shadowElement);
+            }
+
+            // Check if the comment container is scrollable
+            if (commentContainer.scrollHeight > commentContainer.clientHeight) {
+                commentContainerWrapper.classList.add('scrollable');
+            } else {
+                commentContainerWrapper.classList.remove('scrollable');
+            }
+
+            // Add scroll event listener to show/hide shadow based on scroll position
+            commentContainer.addEventListener('scroll', function() {
+                if (this.scrollHeight > this.clientHeight) {
+                    const scrollPercentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                    shadowElement.style.opacity = scrollPercentage < 0.95 ? '1' : '0';
+                }
+            });
+
+            // Trigger initial scroll event to set correct shadow state
+            commentContainer.dispatchEvent(new Event('scroll'));
         }
 
         function createCommentBox(userIp, userData) {
             const commentBox = document.createElement('div');
             commentBox.className = 'comment-box';
             commentBox.dataset.userIp = userIp;
+            const userColor = generateColorFromIP(userIp);
             commentBox.innerHTML = `
-            <span class="comment-user">${userData.name || userIp}:</span>
+            <span class="comment-user" style="color: ${userColor};" data-user-ip="${userIp}">${userData.name || userIp}:</span>
             <span class="comment">${userData.comment}</span>
         `;
 
             if (userIp === currentUserIp) {
                 commentBox.classList.add('current-user');
-                commentBox.addEventListener('click', () => editComment(commentBox.closest('.image-container')));
+                commentBox.addEventListener('click', function() {
+                    editComment(commentBox.closest('.image-container'));
+                });
             }
 
             return commentBox;
+        }
+
+        function generateColorFromIP(ip) {
+            // Implement this function to generate a consistent color for each IP
+            // You can use the same logic as in the PHP function
         }
 
         function createCommentPlaceholder(container, isModal) {
@@ -1264,8 +1454,13 @@ foreach ($data as $ip => $userData) {
 
             const input = document.createElement('textarea');
             input.value = currentComment;
-            input.rows = 3;
             input.style.width = '100%';
+            input.style.boxSizing = 'border-box';
+            input.style.minHeight = '3em';
+
+            // Set initial height based on content
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
 
             let isSaving = false;
 
@@ -1285,6 +1480,10 @@ foreach ($data as $ip => $userData) {
             }
 
             input.addEventListener('blur', saveComment);
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -1305,6 +1504,10 @@ foreach ($data as $ip => $userData) {
                 commentContainer.appendChild(newCommentBox);
             }
             input.focus();
+
+            // Adjust height after focusing
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
         }
 
         function updateComment(imageName, comment) {
@@ -1318,7 +1521,7 @@ foreach ($data as $ip => $userData) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        updateSingleComment(imageName, currentUserIp, comment);
+                        updateSingleComment(imageName, currentUserIp, comment, data.timestamp);
                         if (typeof checkForUpdates === 'function') {
                             checkForUpdates();
                         }
@@ -1339,20 +1542,20 @@ foreach ($data as $ip => $userData) {
                 });
         }
 
-        function updateSingleComment(imageName, userIp, comment) {
+        function updateSingleComment(imageName, userIp, comment, timestamp) {
             const container = document.querySelector(`.image-container[data-image="${imageName}"]`);
             const modalContainer = document.getElementById('imageModal');
 
             if (container) {
-                updateCommentUIForContainer(container, userIp, comment, false);
+                updateCommentUIForContainer(container, userIp, comment, timestamp, false);
             }
 
             if (modalContainer.style.display === 'block' && currentFullImagePath === imageName) {
-                updateCommentUIForContainer(modalContainer, userIp, comment, true);
+                updateCommentUIForContainer(modalContainer, userIp, comment, timestamp, true);
             }
         }
 
-        function updateCommentUIForContainer(container, userIp, comment, isModal) {
+        function updateCommentUIForContainer(container, userIp, comment, timestamp, isModal) {
             let commentContainer = container.querySelector('.comment-container');
             if (!commentContainer) {
                 commentContainer = createCommentContainer(container);
@@ -1369,34 +1572,56 @@ foreach ($data as $ip => $userData) {
                 if (userCommentBox) {
                     userCommentBox.remove();
                 }
+                // Add comment placeholder if it doesn't exist and there are no other comments
+                if (!commentContainer.querySelector('.comment-box')) {
+                    const commentPlaceholder = createCommentPlaceholder(container, isModal);
+                    commentContainer.appendChild(commentPlaceholder);
+                }
             } else {
                 if (!userCommentBox) {
                     userCommentBox = document.createElement('div');
-                    userCommentBox.className = 'comment-box current-user';
+                    userCommentBox.className = 'comment-box';
                     userCommentBox.dataset.userIp = userIp;
                     commentContainer.appendChild(userCommentBox);
                 }
 
-                const userColor = '<?php echo generateColorFromIP($user_ip); ?>';
+                const userColor = generateColorFromIP(userIp);
                 userCommentBox.innerHTML = `
-                <span class="comment-user" style="color: ${userColor};"><?php echo htmlspecialchars($data[$user_ip]['name']); ?>:</span>
-                <span class="comment">${comment}</span>
-            `;
+            <span class="comment-user" style="color: ${userColor};" data-user-ip="${userIp}">${getUserName(userIp)}:</span>
+            <span class="comment">${comment}</span>
+        `;
 
-                userCommentBox.addEventListener('click', function() {
-                    editComment(container, isModal);
-                });
+                if (userIp === currentUserIp) {
+                    userCommentBox.classList.add('current-user');
+                    userCommentBox.addEventListener('click', function() {
+                        editComment(container, isModal);
+                    });
+                }
+
+                userCommentBox.dataset.timestamp = timestamp;
             }
 
+            // Sort comments by timestamp
+            const commentBoxes = Array.from(commentContainer.querySelectorAll('.comment-box'));
+            commentBoxes.sort((a, b) => parseInt(a.dataset.timestamp) - parseInt(b.dataset.timestamp));
+            commentBoxes.forEach(box => commentContainer.appendChild(box));
+
+            // Remove comment placeholder if there are comments
             const existingPlaceholder = commentContainer.querySelector('.comment-placeholder');
-            if (existingPlaceholder) {
+            if (existingPlaceholder && commentContainer.querySelector('.comment-box')) {
                 existingPlaceholder.remove();
             }
 
-            if (!commentContainer.querySelector('.comment-box.current-user')) {
+            // Ensure there's always a way to add a comment for the current user
+            if (!commentContainer.querySelector('.comment-box.current-user') && !commentContainer.querySelector('.comment-placeholder')) {
                 const commentPlaceholder = createCommentPlaceholder(container, isModal);
                 commentContainer.appendChild(commentPlaceholder);
             }
+        }
+
+        function getUserName(userIp) {
+            const userNameElement = document.querySelector(`.user-name[data-user-ip="${userIp}"]`);
+            return userNameElement ? userNameElement.textContent : userIp;
         }
 
         function checkForUpdates() {
@@ -1549,7 +1774,7 @@ foreach ($data as $ip => $userData) {
                         const thumbnail = createThumbnail(imageName, isCurrentUser);
                         starredList.appendChild(thumbnail);
                     });
-                    
+
                     // Maintain minimized state for other users
                     if (!isCurrentUser && !footer.classList.contains('minimized')) {
                         footer.classList.add('minimized');
@@ -1570,14 +1795,14 @@ foreach ($data as $ip => $userData) {
             const footer = document.createElement('div');
             footer.className = 'starred-footer';
             if (!isCurrentUser) {
-                footer.classList.add('minimized');  // Add this line
+                footer.classList.add('minimized'); // Add this line
             }
             footer.dataset.userIp = userIp;
 
             const minimizeButton = document.createElement('button');
             minimizeButton.className = 'minimize-button';
             minimizeButton.title = 'Minimize';
-            minimizeButton.textContent = isCurrentUser ? '▼' : '▲';  // Change this line
+            minimizeButton.textContent = isCurrentUser ? '▼' : '▲'; // Change this line
             footer.appendChild(minimizeButton);
 
             const userName = document.createElement('span');
@@ -1656,8 +1881,24 @@ foreach ($data as $ip => $userData) {
         }
 
         function updateFooterSpacerHeight() {
-            const footerHeight = document.getElementById('starred-footers-container').offsetHeight;
-            document.getElementById('footer-spacer').style.height = footerHeight + 'px';
+            const footerSpacerElement = document.getElementById('footer-spacer');
+            const starredFootersContainer = document.getElementById('starred-footers-container');
+            const footers = Array.from(starredFootersContainer.querySelectorAll('.starred-footer'));
+
+            // Check if we're scrolled to the bottom before making changes
+            const isScrolledToBottom = window.innerHeight + window.pageYOffset >= document.body.offsetHeight - 1;
+
+            let totalHeight = 0;
+            footers.forEach(footer => {
+                totalHeight += footer.offsetHeight;
+            });
+
+            footerSpacerElement.style.height = `${totalHeight}px`;
+
+            // If we were at the bottom, scroll back to the bottom after the change
+            if (isScrolledToBottom) {
+                window.scrollTo(0, document.body.scrollHeight);
+            }
         }
 
         function updateUI(data) {
@@ -1670,7 +1911,8 @@ foreach ($data as $ip => $userData) {
                         }
                         allComments[imageName][userIp] = {
                             name: data[userIp].name || userIp,
-                            comment: data[userIp].comments[imageName]
+                            comment: data[userIp].comments[imageName],
+                            timestamp: data[userIp].comment_timestamps[imageName] || 0
                         };
                     });
                 }
@@ -1789,10 +2031,20 @@ foreach ($data as $ip => $userData) {
 
                 const input = document.createElement('textarea');
                 input.value = currentComment;
-                input.rows = 3;
                 input.style.width = '100%';
+                input.style.boxSizing = 'border-box';
+                input.style.minHeight = '3em';
+
+                // Set initial height based on content
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
+
+                let isSaving = false;
 
                 function saveModalComment() {
+                    if (isSaving) return;
+                    isSaving = true;
+
                     const newComment = input.value.trim();
 
                     // Immediately update the UI
@@ -1809,6 +2061,10 @@ foreach ($data as $ip => $userData) {
                 }
 
                 input.addEventListener('blur', saveModalComment);
+                input.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
                 input.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -1829,6 +2085,10 @@ foreach ($data as $ip => $userData) {
                     commentContainer.appendChild(newCommentBox);
                 }
                 input.focus();
+
+                // Adjust height after focusing
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
             }
 
             function initializeStarredImages() {
@@ -1983,12 +2243,21 @@ foreach ($data as $ip => $userData) {
 
             document.addEventListener('keydown', function(e) {
                 if (modal.style.display === 'block') {
-                    if (e.key === 'ArrowLeft') {
-                        navigateModal(-1);
-                    } else if (e.key === 'ArrowRight') {
-                        navigateModal(1);
-                    } else if (e.key === 'Escape') {
-                        modal.style.display = 'none';
+                    switch (e.key) {
+                        case 'ArrowLeft':
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            navigateModal(-1);
+                            break;
+                        case 'ArrowRight':
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            navigateModal(1);
+                            break;
+                        case 'Escape':
+                            e.preventDefault();
+                            modal.style.display = 'none';
+                            break;
                     }
                 }
             });
@@ -2063,21 +2332,25 @@ foreach ($data as $ip => $userData) {
             // Start the update check
             checkForUpdates();
 
-            // Add event listener for minimize buttons
             document.querySelectorAll('.minimize-button').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function(event) {
                     const footer = this.closest('.starred-footer');
+                    const isMinimized = footer.classList.contains('minimized');
+
+                    // Toggle the minimized state
                     footer.classList.toggle('minimized');
+                    this.textContent = isMinimized ? '▼' : '▲';
 
-                    // Update button text based on minimized state
-                    this.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
+                    // Use setTimeout to allow the DOM to update before we measure and scroll
+                    setTimeout(() => {
+                        updateFooterSpacerHeight();
+                    }, 0);
 
-                    // Prevent the click event from bubbling up to the footer
                     event.stopPropagation();
                 });
             });
 
-            // Add event listener for starred footers to maximize when clicked if minimized
+            // Modify the footer click event listener (for expanding minimized footers)
             document.querySelectorAll('.starred-footer').forEach(footer => {
                 footer.addEventListener('click', function() {
                     if (this.classList.contains('minimized')) {
@@ -2086,9 +2359,17 @@ foreach ($data as $ip => $userData) {
                         if (minimizeButton) {
                             minimizeButton.textContent = '▼';
                         }
+
+                        // Use setTimeout to allow the DOM to update before we measure and scroll
+                        setTimeout(() => {
+                            updateFooterSpacerHeight();
+                        }, 0);
                     }
                 });
             });
+
+            // Call updateFooterSpacerHeight initially
+            updateFooterSpacerHeight();
         });
     </script>
 </head>
@@ -2137,10 +2418,10 @@ foreach ($data as $ip => $userData) {
             <div class="modal-image-container">
                 <img id="modalImage" alt="Modal image">
             </div>
-            <span class="button next" aria-label="Next image">&#10095;</span>
             <div class="comment-container">
                 <!-- Comments will be dynamically inserted here -->
             </div>
+            <span class="button next" aria-label="Next image">&#10095;</span>
             <div class="button-container">
                 <button id="modalStarButton" class="button star-button" title="Star" aria-label="Star image">★</button>
                 <a id="modalDownloadButton" href="#" download class="button download-button" title="Download" aria-label="Download image">⬇</a>
