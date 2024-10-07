@@ -1145,6 +1145,51 @@ foreach ($data as $ip => $userData) {
                 margin: 0 auto;
             }
         }
+
+        /* Add this new rule */
+        @supports (-webkit-backdrop-filter: none) {
+          #top-bar,
+          #starred-footers-container,
+          .modal {
+            z-index: 1;
+          }
+          
+          #top-bar::before,
+          #starred-footers-container::before,
+          .modal::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            z-index: -1;
+          }
+        }
+
+        /* Update these existing rules */
+        #top-bar {
+            /* ... existing properties ... */
+            background-color: rgba(44, 44, 44, 0.8);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+        }
+
+        #starred-footers-container {
+            /* ... existing properties ... */
+            background-color: rgba(44, 44, 44, 0.8);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+        }
+
+        .modal {
+            /* ... existing properties ... */
+            background-color: rgba(44, 44, 44, 0.8);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+        }
     </style>
     <script>
         let initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
