@@ -358,6 +358,14 @@ foreach ($data as $ip => $userData) {
             margin-bottom: 1.25em;
         }
 
+        #page-title {
+            cursor: pointer;
+        }
+
+        #page-title:hover {
+            color: var(--star-color);
+        }
+
         .ellipsis {
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -448,6 +456,10 @@ foreach ($data as $ip => $userData) {
             cursor: pointer;
             color: var(--button-color);
             transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .image-container .button, .image-container .button-container a {
+            font-size: 1.5em;
         }
 
         .star-button.starred,
@@ -944,6 +956,7 @@ foreach ($data as $ip => $userData) {
             transform: translateY(-50%);
             width: 40px;
             height: 40px;
+            cursor: pointer;
         }
 
         #logo-container svg {
@@ -973,6 +986,7 @@ foreach ($data as $ip => $userData) {
             transform: translateY(-50%);
             align-items: center;
             color: #fff;
+            cursor: pointer;
         }
 
         .edit-icon {
@@ -1096,7 +1110,7 @@ foreach ($data as $ip => $userData) {
         @media screen and (max-width: 1819px) {
             .modal-content {
                 grid-template-columns: 3em 1fr 3em;
-                grid-template-rows: auto 1fr auto auto;
+                grid-template-rows: auto auto 1fr auto;
             }
 
             #modalTitle {
@@ -1132,7 +1146,7 @@ foreach ($data as $ip => $userData) {
             }
 
             .button-container {
-                grid-column: 2;
+                grid-column: 1 / -1;
                 grid-row: 4;
             }
         }
@@ -2405,9 +2419,14 @@ foreach ($data as $ip => $userData) {
                 }
             });
 
+            const pageTitle = document.querySelector('#page-title');
+            pageTitle.addEventListener('click', function() {
+                window.location.href = '/';
+            });
+
             const logo = document.querySelector('#logo-container svg');
             logo.addEventListener('click', function() {
-                window.location.href = '/';
+                window.location.href = 'https://github.com/ktonini/reviewGrid';
             });
 
             const userNameContainer = document.getElementById('user-name-container');
