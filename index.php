@@ -241,7 +241,13 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
     ob_start();
 ?>
     <div class="image-container <?php echo $isStarred ? 'starred' : ''; ?>" data-image="<?php echo $filename; ?>">
-        <img src="<?php echo $thumbPath; ?>" alt="<?php echo $title; ?>" data-full-image="<?php echo $fullImagePath; ?>">
+        <div class="image-wrapper">
+            <img src="<?php echo $thumbPath; ?>" alt="<?php echo $title; ?>" data-full-image="<?php echo $fullImagePath; ?>">
+            <button class="button star-button" title="Star" aria-label="Star image">★</button>
+            <div class="hover-buttons">
+                <a href="<?php echo $fullImagePath; ?>" download class="button download-button" title="Download" aria-label="Download image">⬇</a>
+            </div>
+        </div>
         <div class="image-info">
             <h3 class="image-title ellipsis" title="<?php echo $title; ?>"><?php echo $title; ?></h3>
             <div class="comment-container-wrapper">
@@ -250,10 +256,6 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
                     <div class="comment-placeholder">Comment</div>
                 </div>
                 <div class="comment-shadow"></div>
-            </div>
-            <div class="button-container">
-                <button class="button star-button" title="Star" aria-label="Star image">★</button>
-                <a href="<?php echo $fullImagePath; ?>" download class="button download-button" title="Download" aria-label="Download image">⬇</a>
             </div>
         </div>
     </div>
@@ -334,14 +336,14 @@ foreach ($data as $ip => $userData) {
             --text-color: #e0e0e0;
             --card-bg: #3c3c3c;
             --starred-bg: #4a4a4a;
-            --button-color: #888;
+            --button-color: #fff;
             --star-color: #ffa768;
             --copy-button-bg: #009dff;
             --copy-button-hover: #81cfff;
             --scrollbar-bg: rgba(255, 255, 255, 0.1);
             --scrollbar-thumb: rgba(255, 255, 255, 0.3);
             --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
-            --footer-shadow: 0 -20px 100px rgba(0, 0, 0, 0.4);
+            --footer-shadow: 0 -1.25rem 6.25rem rgba(0, 0, 0, 0.4);
         }
 
         body {
@@ -350,12 +352,12 @@ foreach ($data as $ip => $userData) {
             color: var(--text-color);
             background-color: var(--bg-color);
             margin: 0;
-            padding-top: 1.25em;
+            padding-top: 1.25rem;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 1.25em;
+            margin-bottom: 1.25rem;
         }
 
         #page-title {
@@ -374,39 +376,37 @@ foreach ($data as $ip => $userData) {
 
         .gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(15.625em, 1fr));
-            gap: 1.25em;
-            padding: 1.25em;
+            grid-template-columns: repeat(auto-fill, minmax(15.625rem, 1fr));
+            gap: 1.25rem;
+            padding: 1.25rem;
         }
 
         .image-container {
             background-color: var(--card-bg);
-            border-radius: 0.5em;
+            border-radius: 0.5rem;
             overflow: hidden;
-            /* box-shadow: 0 0.25em 0.375em rgba(0, 0, 0, 0.3); */
             transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border 0.2s ease;
             cursor: pointer;
             display: flex;
             flex-direction: column;
-            border: 0.25em solid transparent;
+            border: 0.25rem solid transparent;
+            position: relative;
         }
-
-        /* .image-container:hover {
-            transform: translateY(-0.3125em);
-            box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.4);
-        } */
 
         .image-container.starred {
             background-color: var(--starred-bg);
-            box-shadow: 0 0.375em 0.75em rgba(0, 0, 0, 0.5);
-            /* border: 0.25em solid var(--star-color); */
+            box-shadow: 0 0.375rem 0.75rem rgba(0, 0, 0, 0.5);
             transform: scale(1.02);
             transition: transform 0.2s ease;
         }
 
         .image-container.starred:hover {
-            /* transform: translateY(-0.3125em); */
-            box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+        }
+
+        .image-wrapper {
+            position: relative;
+            overflow: hidden;
         }
 
         .image-container img {
@@ -414,52 +414,98 @@ foreach ($data as $ip => $userData) {
             height: auto;
             display: block;
             cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.05);
+        }
+
+        .star-button {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            background: transparent;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .modal-content .star-button {
+            position: relative;
+            top: 0;
+            left: 0;
+            opacity: 1;
+        }
+
+        .image-container:hover .star-button,
+        .image-container.starred .star-button {
+            opacity: 1;
+        }
+
+        .image-container.starred .star-button {
+            color: var(--star-color);
+            background: transparent;
+            /* text-shadow: 0 0 0.5rem var(--star-color); */
+            filter: drop-shadow(0 0 0.1rem #000);
+            -webkit-text-stroke: 2px white;
+            text-stroke: 2px white;
+        }
+
+        .image-container:hover .star-button {
+            background-color: rgba(0, 0, 0, 0.5);
+            /* border-radius: 0.25rem; */
+        }
+
+        .image-container.starred:hover .star-button,
+        .image-container:hover .star-button.starred {
+            color: var(--star-color);
+        }
+
+        .hover-buttons {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-container:hover .hover-buttons {
+            opacity: 1;
+        }
+
+        /* Add this new rule */
+        .star-button {
+            width: auto;
+            height: auto;
+            padding: 0.5rem;
+        }
+
+        .button:hover {
+            transform: scale(1.1);
         }
 
         .image-info {
-            padding: 0.25em;
+            padding: 0.25rem;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
 
         .image-title {
-            margin: 0 0 0.625em 0;
-            font-size: 1em;
+            margin: 0 0 0.625rem 0;
+            font-size: 1rem;
             font-weight: bold;
             color: var(--text-color);
             text-align: center;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: auto;
-            padding-top: 0.625em;
-        }
-
-        .button:hover {
-            background-color: #444;
-        }
-
-        .button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 2em;
-            height: 2em;
-            overflow: hidden;
-            border: none;
-            background-color: #333;
-            border-radius: 0.25em;
-            font-size: 1.5em;
-            cursor: pointer;
-            color: var(--button-color);
-            transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
-        }
-
-        .image-container .button, .image-container .button-container a {
-            font-size: 1.5em;
         }
 
         .star-button.starred,
@@ -476,52 +522,65 @@ foreach ($data as $ip => $userData) {
             width: 100%;
             height: 100%;
             background-color: rgba(44, 44, 44, 0.8);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(1.25rem);
         }
 
         .modal-content {
             display: grid;
-            grid-template-rows: auto 1fr auto;
-            grid-template-columns: 3em 3fr 1fr 3em;
-            gap: 10px;
+            grid-template-columns: 3rem 1fr 3rem;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 0.625rem;
             width: 100%;
             height: 100%;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            padding: 20px;
-            border-radius: 10px;
+            padding: 1.25rem;
+            border-radius: 0.625rem;
         }
 
         .button {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 2em;
-            height: 2em;
+            width: 1.5em;
+            height: 1.5em;
+            overflow: hidden;
+            border: none;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 0.25rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--button-color);
+            transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 1.5em;
+            height: 1.5em;
             overflow: hidden;
             border: none;
             background-color: #333;
-            font-size: 2em;
+            font-size: 2rem;
             cursor: pointer;
             align-self: center;
             justify-self: center;
         }
 
         .close {
-            grid-column: 4;
+            grid-column: 3;
             grid-row: 1;
+            justify-self: end;
         }
 
         .prev {
             grid-column: 1;
             grid-row: 2;
-        }
-
-        .next {
-            grid-column: 4;
-            grid-row: 2;
+            align-self: center;
         }
 
         .modal-image-container {
@@ -529,9 +588,8 @@ foreach ($data as $ip => $userData) {
             grid-row: 2;
             display: flex;
             justify-content: center;
-            /* align-items: center; */
+            align-items: center;
             overflow: hidden;
-            margin: 1em;
         }
 
         #modalImage {
@@ -541,28 +599,37 @@ foreach ($data as $ip => $userData) {
         }
 
         #modalTitle {
-            grid-column: 2 / 4;
+            grid-column: 2;
             grid-row: 1;
             text-align: center;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        }
+
+        .next {
+            grid-column: 3;
+            grid-row: 2;
+            align-self: center;
+        }
+
+        #modalStarButton {
+            grid-column: 1;
+            grid-row: 3;
+            justify-self: start;
+            align-self: end;
+        }
+
+        #modalDownloadButton {
+            grid-column: 3;
+            grid-row: 3;
+            justify-self: end;
+            align-self: end;
         }
 
         .comment-container {
-            grid-column: 3;
-            grid-row: 2;
-            overflow-y: auto;
-            max-height: 100%;
-            /* padding-right: 10px; */
-        }
-
-        .button-container {
-            grid-column: 1 / 5;
+            grid-column: 2 / -2;
             grid-row: 3;
-            display: flex;
-            justify-content: space-between;
+            overflow-y: auto;
+            max-height: 30vh;
         }
 
         .close:hover,
@@ -586,19 +653,19 @@ foreach ($data as $ip => $userData) {
             overflow-y: hidden;
             box-shadow: var(--footer-shadow);
             background-color: rgba(44, 44, 44, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding-bottom: 0.625em;
+            backdrop-filter: blur(1.25rem);
+            -webkit-backdrop-filter: blur(1.25rem);
+            padding-bottom: 0.625rem;
         }
 
         .starred-footer {
             display: grid;
-            grid-template-columns: auto 5em 1fr auto auto;
+            grid-template-columns: auto 5rem 1fr auto auto;
             grid-template-areas: "minimize user list download copy";
             align-items: center;
-            padding: 0.625em;
+            padding: 0.625rem;
             color: #fff;
-            gap: 0.625em;
+            gap: 0.625rem;
         }
 
         .minimize-button {
@@ -607,27 +674,27 @@ foreach ($data as $ip => $userData) {
             border: none;
             color: var(--button-color);
             cursor: pointer;
-            font-size: 0.8em;
-            padding: 0.3125em;
+            font-size: 0.8rem;
+            padding: 0.3125rem;
             transition: transform 0.2s ease;
         }
 
         .user-name {
             grid-area: user;
             flex-shrink: 0;
-            min-width: 5em;
+            min-width: 5rem;
         }
 
         .starred-list-container {
             grid-area: list;
             overflow-x: auto;
-            margin-bottom: -1em;
+            margin-bottom: -1rem;
         }
 
         .footer-buttons {
             grid-area: download / download / copy / copy;
             display: flex;
-            gap: 0.625em;
+            gap: 0.625rem;
         }
 
         .download-all-button {
@@ -650,13 +717,13 @@ foreach ($data as $ip => $userData) {
 
         .starred-list {
             display: inline-flex;
-            gap: 0.625em;
+            gap: 0.625rem;
         }
 
         .starred-thumbnail {
             position: relative;
-            width: 5em;
-            height: 5em;
+            width: 5rem;
+            height: 5rem;
             cursor: pointer;
         }
 
@@ -664,7 +731,7 @@ foreach ($data as $ip => $userData) {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 0.625em;
+            border-radius: 0.625rem;
         }
 
         .starred-thumbnail .thumbnail-buttons {
@@ -680,8 +747,8 @@ foreach ($data as $ip => $userData) {
             align-items: center;
             opacity: 0;
             transition: opacity 0.2s ease;
-            gap: 0.25em;
-            margin: 0.25em;
+            gap: 0.25rem;
+            margin: 0.25rem;
         }
 
         .starred-thumbnail:hover .thumbnail-buttons {
@@ -691,31 +758,31 @@ foreach ($data as $ip => $userData) {
         .thumbnail-buttons button {
             border: none;
             color: #fff;
-            font-size: 1em;
+            font-size: 1rem;
             cursor: pointer;
-            padding: 0.125em;
-            margin: 0 0.125em;
+            padding: 0.125rem;
+            margin: 0 0.125rem;
             background-color: rgba(0, 0, 0, 0.5);
             width: 100%;
             height: 100%;
-            border-radius: 0.25em;
-            backdrop-filter: blur(0.3125em);
+            border-radius: 0.25rem;
+            backdrop-filter: blur(0.3125rem);
         }
 
         #toast {
             visibility: hidden;
-            min-width: 15.625em;
-            margin-left: -7.8125em;
+            min-width: 15.625rem;
+            margin-left: -7.8125rem;
             background-color: #333;
             color: #fff;
             text-align: center;
-            border-radius: 0.125em;
-            padding: 1em;
+            border-radius: 0.125rem;
+            padding: 1rem;
             position: fixed;
             z-index: 1001;
             left: 50%;
-            bottom: 1.875em;
-            font-size: 1.0625em;
+            bottom: 1.875rem;
+            font-size: 1.0625rem;
         }
 
         #toast.show {
@@ -731,7 +798,7 @@ foreach ($data as $ip => $userData) {
             }
 
             to {
-                bottom: 1.875em;
+                bottom: 1.875rem;
                 opacity: 1;
             }
         }
@@ -743,14 +810,14 @@ foreach ($data as $ip => $userData) {
             }
 
             to {
-                bottom: 1.875em;
+                bottom: 1.875rem;
                 opacity: 1;
             }
         }
 
         @-webkit-keyframes fadeout {
             from {
-                bottom: 1.875em;
+                bottom: 1.875rem;
                 opacity: 1;
             }
 
@@ -762,7 +829,7 @@ foreach ($data as $ip => $userData) {
 
         @keyframes fadeout {
             from {
-                bottom: 1.875em;
+                bottom: 1.875rem;
                 opacity: 1;
             }
 
@@ -774,15 +841,15 @@ foreach ($data as $ip => $userData) {
 
         #nameInput {
             width: 100%;
-            padding: 0.625em;
-            margin-bottom: 0.625em;
+            padding: 0.625rem;
+            margin-bottom: 0.625rem;
         }
 
         .footer-buttons {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 0.625em;
+            margin-left: 0.625rem;
         }
 
         .footer-button {
@@ -795,7 +862,7 @@ foreach ($data as $ip => $userData) {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 0.625em;
+            margin-left: 0.625rem;
         }
 
         .footer-button:hover {
@@ -803,18 +870,18 @@ foreach ($data as $ip => $userData) {
         }
 
         .footer-button svg {
-            width: 2em;
-            height: 2em;
+            width: 2rem;
+            height: 2rem;
         }
 
         .user-name-input {
             background-color: var(--bg-color);
             color: var(--text-color);
             border: 1px solid var(--text-color);
-            padding: 0.3125em;
-            border-radius: 0.25em;
-            font-size: 1em;
-            width: 12em;
+            padding: 0.3125rem;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            width: 12rem;
         }
 
         .user-name.editing {
@@ -823,18 +890,18 @@ foreach ($data as $ip => $userData) {
 
         /* Scrollbar styles */
         ::-webkit-scrollbar {
-            width: 0.5em;
-            height: 0.5em;
+            width: 0.5rem;
+            height: 0.5rem;
         }
 
         ::-webkit-scrollbar-track {
             background: var(--scrollbar-bg);
-            border-radius: 0.25em;
+            border-radius: 0.25rem;
         }
 
         ::-webkit-scrollbar-thumb {
             background: var(--scrollbar-thumb);
-            border-radius: 0.25em;
+            border-radius: 0.25rem;
         }
 
         ::-webkit-scrollbar-thumb:hover {
@@ -853,25 +920,24 @@ foreach ($data as $ip => $userData) {
         }
 
         .comment-container {
-            border-radius: 0.5em;
-            font-size: 0.8em;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5em;
+            gap: 0.5rem;
         }
 
         .comment-box {
-            padding: 0.375em 0.5em;
+            padding: 0.375rem 0.5rem;
             background-color: #1f1f1f;
-            border-radius: 0.375em;
-            box-shadow: 0 0.0625em 0.125em rgba(0, 0, 0, 0.2);
-            /* display: flex; */
+            border-radius: 0.375rem;
+            box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2);
             align-items: baseline;
         }
 
         .comment-user {
             font-weight: bold;
-            margin-right: 0.3125em;
+            margin-right: 0.3125rem;
             white-space: nowrap;
             color: var(--star-color);
         }
@@ -880,17 +946,17 @@ foreach ($data as $ip => $userData) {
             color: #808080;
             font-style: italic;
             cursor: pointer;
-            padding: 0.375em 0.5em;
+            padding: 0.375rem 0.5rem;
             border: 1px dashed #808080;
-            border-radius: 0.5em;
+            border-radius: 0.5rem;
         }
 
         textarea {
             width: 100%;
             padding: 0;
-            border-radius: 0.25em;
+            border-radius: 0.25rem;
             resize: vertical;
-            min-height: 3.75em;
+            min-height: 3.75rem;
             background-color: #2a2a2a;
             color: #d0d0d0;
         }
@@ -898,10 +964,6 @@ foreach ($data as $ip => $userData) {
         .current-user .comment-user {
             color: #81cfff;
         }
-
-        /* .current-user {
-            background-color: #3c3c3c;
-        } */
 
         .comment-box,
         .comment-placeholder {
@@ -921,7 +983,7 @@ foreach ($data as $ip => $userData) {
         }
 
         .starred-footer.minimized {
-            padding: 0.3125em 0.625em;
+            padding: 0.3125rem 0.625rem;
         }
 
         .star-button:focus {
@@ -933,39 +995,37 @@ foreach ($data as $ip => $userData) {
             top: 0;
             left: 0;
             right: 0;
-            height: 3.75em;
+            height: 3.75rem;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 0.5em;
+            padding: 0.5rem;
             background-color: rgba(44, 44, 44, 0.8);
-            backdrop-filter: blur(1.25em);
-            -webkit-backdrop-filter: blur(1.25em);
+            backdrop-filter: blur(1.25rem);
+            -webkit-backdrop-filter: blur(1.25rem);
             z-index: 1000;
             box-shadow: 0 0 0 rgba(0, 0, 0, 0);
         }
 
         #top-bar.scrolled {
-            box-shadow: 0 20px 10px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 1.25rem 0.625rem rgba(0, 0, 0, 0.4);
         }
 
         #logo-container {
             position: absolute;
-            left: 0.5em;
+            left: 0.5rem;
             top: 50%;
             transform: translateY(-50%);
-            width: 40px;
-            height: 40px;
+            width: 2.5rem;
+            height: 2.5rem;
             cursor: pointer;
         }
 
         #logo-container svg {
             fill: var(--text-color);
             transition: fill 0.3s ease;
-            width: 40px;
-            /* Adjust as needed */
-            height: 40px;
-            /* Adjust as needed */
+            width: 2.5rem;
+            height: 2.5rem;
         }
 
         #logo-container:hover svg {
@@ -975,13 +1035,13 @@ foreach ($data as $ip => $userData) {
         #page-title {
             text-align: center;
             margin: 0;
-            font-size: 1.5em;
+            font-size: 1.5rem;
             color: var(--text-color);
         }
 
         #user-name-container {
             position: absolute;
-            right: 0.5em;
+            right: 0.5rem;
             top: 50%;
             transform: translateY(-50%);
             align-items: center;
@@ -990,9 +1050,9 @@ foreach ($data as $ip => $userData) {
         }
 
         .edit-icon {
-            width: 16px;
-            height: 16px;
-            margin-left: 5px;
+            width: 1rem;
+            height: 1rem;
+            margin-left: 0.3125rem;
             cursor: pointer;
             vertical-align: middle;
         }
@@ -1008,8 +1068,8 @@ foreach ($data as $ip => $userData) {
         #top-user-name {
             cursor: pointer;
             transition: background-color 0.2s ease;
-            font-size: 0.9em;
-            margin-right: 5px;
+            font-size: 0.9rem;
+            margin-right: 0.3125rem;
         }
 
         #user-name-container:hover {
@@ -1019,11 +1079,11 @@ foreach ($data as $ip => $userData) {
         .user-name-input {
             color: #fff;
             border: 1px solid #555;
-            padding: 0.5em 1em;
-            border-radius: 0.5em;
-            font-size: 0.9em;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
             width: auto;
-            min-width: 9.375em;
+            min-width: 9.375rem;
             background-color: rgba(0, 0, 0, 0.1);
         }
 
@@ -1034,7 +1094,7 @@ foreach ($data as $ip => $userData) {
 
         /* Add some padding to the body to account for the fixed top bar */
         body {
-            padding-top: 60px;
+            padding-top: 3.75rem;
         }
 
         .starred-footer.minimized .starred-list-container,
@@ -1049,25 +1109,21 @@ foreach ($data as $ip => $userData) {
 
         .image-container .comment-container-wrapper {
             position: relative;
-            max-height: 150px;
-            /* Adjust this value as needed */
-            margin-bottom: 10px;
-            /* Add some space below the comment area */
-            border-radius: 0.5em;
+            max-height: 9.375rem;
+            margin-bottom: 0.625rem;
+            border-radius: 0.5rem;
             overflow: hidden;
         }
 
         .image-container .comment-container {
-            max-height: 130px;
-            /* Reduced to account for shadow */
+            max-height: 8.125rem;
             overflow-y: auto;
-            border-radius: 0.5em;
-            font-size: 0.8em;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5em;
+            gap: 0.5rem;
             box-sizing: border-box;
-            /* Include padding in the element's total width and height */
         }
 
         .comment-shadow {
@@ -1075,57 +1131,48 @@ foreach ($data as $ip => $userData) {
             bottom: 0;
             left: 0;
             right: 0;
-            height: 20px;
+            height: 1.25rem;
             background: linear-gradient(to bottom, transparent, rgba(44, 44, 44, 0.9));
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s ease;
-            border-bottom-left-radius: 0.5em;
-            border-bottom-right-radius: 0.5em;
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
         }
 
         .image-container .comment-container-wrapper.scrollable .comment-shadow {
             opacity: 1;
         }
 
-        /* Ensure the comment boxes within the container don't have their own scroll */
         .image-container .comment-box {
             overflow: visible;
         }
 
-        /* Adjust scrollbar styles */
         .image-container .comment-container::-webkit-scrollbar {
-            width: 6px;
+            width: 0.375rem;
         }
 
         .image-container .comment-container::-webkit-scrollbar-thumb {
             background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
+            border-radius: 0.1875rem;
         }
 
         .image-container .comment-container::-webkit-scrollbar-track {
             background-color: transparent;
         }
 
-        @media screen and (max-width: 1819px) {
+        @media screen and (min-width: 1820px) {
             .modal-content {
-                grid-template-columns: 3em 1fr 3em;
-                grid-template-rows: auto auto 1fr auto;
+                grid-template-columns: 3rem auto 1fr 3rem;
+                grid-template-rows: auto 1fr auto;
             }
 
             #modalTitle {
-                grid-column: 2;
-                grid-row: 1;
+                grid-column: 2 / 4;
             }
 
             .close {
-                grid-column: 3;
-                grid-row: 1;
-            }
-
-            .prev {
-                grid-column: 1;
-                grid-row: 2;
+                grid-column: 4;
             }
 
             .modal-image-container {
@@ -1133,21 +1180,32 @@ foreach ($data as $ip => $userData) {
                 grid-row: 2;
             }
 
-            .next {
-                grid-column: 3;
+            .prev {
+                grid-column: 1;
                 grid-row: 2;
             }
 
-            .comment-container {
-                grid-column: 2;
-                grid-row: 3;
-                max-height: 30vh;
-                overflow-y: auto;
+            .next {
+                grid-column: 4;
+                grid-row: 2;
             }
 
-            .button-container {
-                grid-column: 1 / -1;
-                grid-row: 4;
+            #modalStarButton {
+                grid-column: 1;
+                grid-row: 3;
+                justify-self: start;
+            }
+
+            #modalDownloadButton {
+                grid-column: 4;
+                grid-row: 3;
+                justify-self: end;
+            }
+
+            .comment-container {
+                grid-column: 3;
+                grid-row: 2 / 4;
+                max-height: none;
             }
         }
 
@@ -1162,47 +1220,48 @@ foreach ($data as $ip => $userData) {
 
         /* Add this new rule */
         @supports (-webkit-backdrop-filter: none) {
-          #top-bar,
-          #starred-footers-container,
-          .modal {
-            z-index: 1;
-          }
-          
-          #top-bar::before,
-          #starred-footers-container::before,
-          .modal::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-            z-index: -1;
-          }
+
+            #top-bar,
+            #starred-footers-container,
+            .modal {
+                z-index: 1;
+            }
+
+            #top-bar::before,
+            #starred-footers-container::before,
+            .modal::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                -webkit-backdrop-filter: blur(1.25rem);
+                backdrop-filter: blur(1.25rem);
+                z-index: -1;
+            }
         }
 
         /* Update these existing rules */
         #top-bar {
             /* ... existing properties ... */
             background-color: rgba(44, 44, 44, 0.8);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(1.25rem);
+            backdrop-filter: blur(1.25rem);
         }
 
         #starred-footers-container {
             /* ... existing properties ... */
             background-color: rgba(44, 44, 44, 0.8);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(1.25rem);
+            backdrop-filter: blur(1.25rem);
         }
 
         .modal {
             /* ... existing properties ... */
             background-color: rgba(44, 44, 44, 0.8);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(1.25rem);
+            backdrop-filter: blur(1.25rem);
         }
     </style>
     <script>
@@ -1394,7 +1453,7 @@ foreach ($data as $ip => $userData) {
             if (!commentContainerWrapper) {
                 commentContainerWrapper = document.createElement('div');
                 commentContainerWrapper.className = 'comment-container-wrapper';
-                container.querySelector('.image-info').insertBefore(commentContainerWrapper, container.querySelector('.button-container'));
+                container.querySelector('.image-info').appendChild(commentContainerWrapper);
             }
 
             let commentContainer = commentContainerWrapper.querySelector('.comment-container');
@@ -2441,9 +2500,11 @@ foreach ($data as $ip => $userData) {
                 const container = e.target.closest('.image-container');
                 if (!container) return;
 
-                if (e.target.tagName === 'IMG') {
+                if (e.target.closest('.image-wrapper img')) {
                     openModal(container);
                 } else if (e.target.classList.contains('star-button')) {
+                    e.preventDefault(); // Prevent opening the modal
+                    e.stopPropagation(); // Prevent event bubbling
                     toggleStar(container);
                 } else if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
                     editComment(container);
@@ -2567,20 +2628,16 @@ foreach ($data as $ip => $userData) {
 
     <div id="imageModal" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitle"></h3>
-            <span class="button close" aria-label="Close modal">&times;</span>
-            <span class="button prev" aria-label="Previous image">&#10094;</span>
+            <h2 id="modalTitle"></h2>
+            <button class="button close" title="Close">×</button>
+            <button class="button prev" title="Previous">❮</button>
             <div class="modal-image-container">
-                <img id="modalImage" alt="Modal image">
+                <img id="modalImage" src="" alt="">
             </div>
-            <div class="comment-container">
-                <!-- Comments will be dynamically inserted here -->
-            </div>
-            <span class="button next" aria-label="Next image">&#10095;</span>
-            <div class="button-container">
-                <button id="modalStarButton" class="button star-button" title="Star" aria-label="Star image">★</button>
-                <a id="modalDownloadButton" href="#" download class="button download-button" title="Download" aria-label="Download image">⬇</a>
-            </div>
+            <button class="button next" title="Next">❯</button>
+            <button id="modalStarButton" class="button star-button" title="Star">★</button>
+            <a id="modalDownloadButton" class="button download-button" title="Download" download>⬇</a>
+            <div class="comment-container"></div>
         </div>
     </div>
 
