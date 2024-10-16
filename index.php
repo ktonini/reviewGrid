@@ -1,6 +1,18 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+
+// // Debug information
+// echo "<pre style='background-color: #f0f0f0; padding: 10px; margin-bottom: 20px;'>";
+// echo "PHP Version: " . phpversion() . "\n";
+// echo "Server Software: " . $_SERVER['SERVER_SOFTWARE'] . "\n";
+// echo "Server Name: " . $_SERVER['SERVER_NAME'] . "\n";
+// echo "Server Address: " . $_SERVER['SERVER_ADDR'] . "\n";
+// echo "Detected Client IP: " . getClientIP() . "\n";
+// echo "REMOTE_ADDR: " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'Not set') . "\n";
+// echo "HTTP X-Forwarded-For: " . (isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : 'Not set') . "\n";
+// echo "HTTP Client IP: " . (isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : 'Not set') . "\n";
+// echo "</pre>";
 
 // Configuration
 $baseUrl = rtrim((!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'], '/');
@@ -30,7 +42,22 @@ if (!file_exists($thumbsDir)) {
     mkdir($thumbsDir, 0755, true);
 }
 
-$user_ip = $_SERVER['REMOTE_ADDR'];
+function getClientIP() {
+    $ip_keys = array('HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR');
+    foreach ($ip_keys as $key) {
+        if (array_key_exists($key, $_SERVER) === true) {
+            foreach (explode(',', $_SERVER[$key]) as $ip) {
+                $ip = trim($ip);
+                if (filter_var($ip, FILTER_VALIDATE_IP) !== false) {
+                    return $ip;
+                }
+            }
+        }
+    }
+    return 'UNKNOWN';
+}
+
+$user_ip = getClientIP();
 $usersFile = $dataDir . 'data.json';
 
 // Load or initialize users data
@@ -44,6 +71,9 @@ if (!isset($data[$user_ip])) {
     ];
     file_put_contents($usersFile, json_encode($data));
 }
+
+// Ensure we have a name for the user (use IP if no name is set)
+$user_name = isset($data[$user_ip]['name']) ? $data[$user_ip]['name'] : $user_ip;
 
 // Add a new function to handle footer state updates
 function handleFooterStateUpdate()
@@ -76,7 +106,7 @@ if (isset($_GET['check_updates'])) {
 }
 
 // Get all images in the script directory
-$images = glob($scriptDir . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
+$images = glob($scriptDir . '*.{jpg,jpeg,png,gif,webp}', GLOB_BRACE);
 
 // Remove the script itself from the images array
 $images = array_filter($images, function ($key) {
@@ -86,7 +116,7 @@ $images = array_filter($images, function ($key) {
 // Create thumbnails if they don't exist
 foreach ($images as $image) {
     $filename = basename($image);
-    $thumbFilename = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $filename);
+    $thumbFilename = preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '.webp', $filename);
     $thumbPath = $thumbsDir . $thumbFilename;
 
     if (!file_exists($thumbPath)) {
@@ -111,10 +141,22 @@ function createThumbnail($source, $destination, $width, $height)
 
     $imgString = file_get_contents($source);
     $image = imagecreatefromstring($imgString);
+    
+    if (!$image) {
+        // If imagecreatefromstring fails, try to create from WebP
+        if (function_exists('imagecreatefromwebp')) {
+            $image = imagecreatefromwebp($source);
+        }
+    }
+    
+    if (!$image) {
+        die("Unable to create image from source.");
+    }
+
     $tmp = imagecreatetruecolor($width, $height);
     imagecopyresampled($tmp, $image, 0, 0, (int)$x, 0, $width, $height, $w, $h);
 
-    $webpDestination = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $destination);
+    $webpDestination = preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '.webp', $destination);
 
     if (function_exists('imagewebp')) {
         // Create WebP thumbnail
@@ -232,7 +274,7 @@ function handleCheckUpdates()
 function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data, $user_ip, $baseUrl, $relativeThumbsUrl)
 {
     $filename = basename($image);
-    $thumbFilename = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $filename);
+    $thumbFilename = preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '.webp', $filename);
     $thumbPath = $relativeThumbsUrl . '/' . $thumbFilename;
     $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $filename;
     $isStarred = in_array($filename, $starredImages);
@@ -362,6 +404,8 @@ foreach ($data as $ip => $userData) {
 
         #page-title {
             cursor: pointer;
+            color: var(--text-color);
+            text-decoration: none;
         }
 
         #page-title:hover {
@@ -451,7 +495,6 @@ foreach ($data as $ip => $userData) {
         .image-container.starred .star-button {
             color: var(--star-color);
             background: transparent;
-            /* text-shadow: 0 0 0.5rem var(--star-color); */
             filter: drop-shadow(0 0 0.1rem #000);
             -webkit-text-stroke: 2px white;
             text-stroke: 2px white;
@@ -459,7 +502,6 @@ foreach ($data as $ip => $userData) {
 
         .image-container:hover .star-button {
             background-color: rgba(0, 0, 0, 0.5);
-            /* border-radius: 0.25rem; */
         }
 
         .image-container.starred:hover .star-button,
@@ -482,7 +524,6 @@ foreach ($data as $ip => $userData) {
             opacity: 1;
         }
 
-        /* Add this new rule */
         .star-button {
             width: auto;
             height: auto;
@@ -630,6 +671,13 @@ foreach ($data as $ip => $userData) {
             grid-row: 3;
             overflow-y: auto;
             max-height: 30vh;
+        }
+
+        .modal-content .comment-container {
+            min-width: 15rem;
+            padding: 1rem;
+            margin: 1rem;
+            background-color: rgba(0, 0, 0, 0.25);
         }
 
         .close:hover,
@@ -1019,6 +1067,7 @@ foreach ($data as $ip => $userData) {
             width: 2.5rem;
             height: 2.5rem;
             cursor: pointer;
+            display: block;
         }
 
         #logo-container svg {
@@ -1037,6 +1086,7 @@ foreach ($data as $ip => $userData) {
             margin: 0;
             font-size: 1.5rem;
             color: var(--text-color);
+            text-decoration: none;
         }
 
         #user-name-container {
@@ -1293,6 +1343,15 @@ foreach ($data as $ip => $userData) {
                 nextBtn = modal.querySelector('.next');
                 modalStarButton = document.getElementById('modalStarButton');
                 modalDownloadButton = document.getElementById('modalDownloadButton');
+
+                // Add this new code
+                const pageTitle = document.getElementById('page-title');
+                if (pageTitle) {
+                    pageTitle.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        window.location.href = window.location.pathname;
+                    });
+                }
             } else {
                 console.error('Modal element not found in the DOM');
             }
@@ -1303,7 +1362,7 @@ foreach ($data as $ip => $userData) {
             if (currentImageIndex >= 0) {
                 const currentImage = images[currentImageIndex];
                 const imageSrc = currentImage.querySelector('img').dataset.fullImage;
-                const thumbnailSrc = imageSrc.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+                const thumbnailSrc = imageSrc.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '.webp');
                 const imageTitle = currentImage.querySelector('.image-title').textContent;
                 const isStarred = currentImage.classList.contains('starred');
 
@@ -1324,7 +1383,7 @@ foreach ($data as $ip => $userData) {
             } else {
                 // Handle case for images not in the current view (e.g., from footer)
                 const imageTitle = currentFullImagePath.split('/').pop();
-                const thumbnailSrc = `${relativeThumbsUrl}/${imageTitle.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp')}`;
+                const thumbnailSrc = `${relativeThumbsUrl}/${imageTitle.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '.webp')}`;
 
                 modalImg.src = `${baseUrl}${subDir ? '/' + subDir : ''}/${currentFullImagePath}`;
                 modalImg.alt = imageTitle;
@@ -1855,16 +1914,9 @@ foreach ($data as $ip => $userData) {
             const copyNamesButton = footer.querySelector('.copy-names-button');
             const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
 
-            // TODO: fix conflict here with global declaration of thhis
-            // minimizeButton.addEventListener('click', () => {
-            //     footer.classList.toggle('minimized');
-            //     minimizeButton.textContent = footer.classList.contains('minimized') ? '▲' : '▼';
-            // });
-
             thumbnails.forEach(thumbnail => {
                 const imageName = thumbnail.dataset.fullImage.split('/').pop();
 
-                // Add click event to open modal for all users
                 thumbnail.addEventListener('click', (event) => {
                     if (event.target === thumbnail || event.target.tagName === 'IMG') {
                         openModal(imageName);
@@ -1889,11 +1941,9 @@ foreach ($data as $ip => $userData) {
                         });
                     }
                 } else {
-                    // Remove buttons for other users' footers
                     thumbnail.querySelectorAll('.thumbnail-buttons').forEach(buttons => buttons.remove());
                 }
             });
-
 
             if (downloadAllButton) {
                 downloadAllButton.addEventListener('click', () => {
@@ -1911,9 +1961,7 @@ foreach ($data as $ip => $userData) {
                         const imageUrl = thumbnail.dataset.fullImage;
                         copyText += `${imageUrl}\n`;
 
-                        // Find the corresponding image container in the main gallery
-                        const imageName = imageUrl.split('/').pop();
-                        const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                        const imageContainer = document.querySelector(`.image-container[data-image="${imageUrl.split('/').pop()}"]`);
                         if (imageContainer) {
                             const comments = imageContainer.querySelectorAll('.comment-box');
                             comments.forEach(comment => {
@@ -1922,7 +1970,7 @@ foreach ($data as $ip => $userData) {
                                 copyText += `    ${userName} ${commentText}\n`;
                             });
                         }
-                        copyText += '\n'; // Add an extra newline between images
+                        copyText += '\n';
                     });
 
                     navigator.clipboard.writeText(copyText.trim()).then(() => {
@@ -1933,7 +1981,6 @@ foreach ($data as $ip => $userData) {
                     });
                 });
             }
-
         }
 
         function updateStarredFooters() {
@@ -1944,10 +1991,8 @@ foreach ($data as $ip => $userData) {
                 document.body.appendChild(starredFootersContainer);
             }
 
-            // Update current user's footer
             updateUserFooter(currentUserIp, initialStarredImages, true);
 
-            // Update other users' footers
             if (userStarredImages) {
                 Object.keys(userStarredImages).forEach(userIp => {
                     if (userIp !== currentUserIp) {
@@ -1975,7 +2020,6 @@ foreach ($data as $ip => $userData) {
                         starredList.appendChild(thumbnail);
                     });
 
-                    // Maintain minimized state for other users
                     if (!isCurrentUser && !footer.classList.contains('minimized')) {
                         footer.classList.add('minimized');
                         const minimizeButton = footer.querySelector('.minimize-button');
@@ -1995,14 +2039,14 @@ foreach ($data as $ip => $userData) {
             const footer = document.createElement('div');
             footer.className = 'starred-footer';
             if (!isCurrentUser) {
-                footer.classList.add('minimized'); // Add this line
+                footer.classList.add('minimized');
             }
             footer.dataset.userIp = userIp;
 
             const minimizeButton = document.createElement('button');
             minimizeButton.className = 'minimize-button';
             minimizeButton.title = 'Minimize';
-            minimizeButton.textContent = isCurrentUser ? '▼' : '▲'; // Change this line
+            minimizeButton.textContent = isCurrentUser ? '▼' : '▲';
             footer.appendChild(minimizeButton);
 
             const userName = document.createElement('span');
@@ -2054,7 +2098,7 @@ foreach ($data as $ip => $userData) {
             thumbnail.dataset.fullImage = `${baseUrl}${subDir ? '/' + subDir : ''}/${imageName}`;
 
             const img = document.createElement('img');
-            const webpImageName = imageName.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+            const webpImageName = imageName.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '.webp');
             img.src = `${relativeThumbsUrl}/${webpImageName}`;
             img.alt = imageName;
 
@@ -2085,7 +2129,6 @@ foreach ($data as $ip => $userData) {
             const starredFootersContainer = document.getElementById('starred-footers-container');
             const footers = Array.from(starredFootersContainer.querySelectorAll('.starred-footer'));
 
-            // Check if we're scrolled to the bottom before making changes
             const isScrolledToBottom = window.innerHeight + window.pageYOffset >= document.body.offsetHeight - 1;
 
             let totalHeight = 0;
@@ -2095,7 +2138,6 @@ foreach ($data as $ip => $userData) {
 
             footerSpacerElement.style.height = `${totalHeight}px`;
 
-            // If we were at the bottom, scroll back to the bottom after the change
             if (isScrolledToBottom) {
                 window.scrollTo(0, document.body.scrollHeight);
             }
@@ -2184,7 +2226,7 @@ foreach ($data as $ip => $userData) {
 
             if (typeof containerOrImageName === 'string') {
                 imageName = containerOrImageName;
-                currentImageIndex = -1; // Indicate that this is a footer image
+                currentImageIndex = -1;
             } else {
                 imageName = containerOrImageName.dataset.image;
                 currentImageIndex = images.indexOf(containerOrImageName);
@@ -2239,7 +2281,6 @@ foreach ($data as $ip => $userData) {
                 input.style.boxSizing = 'border-box';
                 input.style.minHeight = '3em';
 
-                // Set initial height based on content
                 input.style.height = 'auto';
                 input.style.height = input.scrollHeight + 'px';
 
@@ -2251,13 +2292,10 @@ foreach ($data as $ip => $userData) {
 
                     const newComment = input.value.trim();
 
-                    // Immediately update the UI
                     updateCommentUIForContainer(modal, currentUserIp, newComment, true);
 
-                    // Then update the server and refresh
                     updateComment(currentFullImagePath, newComment);
 
-                    // Refresh the comments for the main gallery image
                     if (currentImageIndex >= 0) {
                         const currentImage = images[currentImageIndex];
                         updateCommentUIForContainer(currentImage, currentUserIp, newComment, false);
@@ -2290,7 +2328,6 @@ foreach ($data as $ip => $userData) {
                 }
                 input.focus();
 
-                // Adjust height after focusing
                 input.style.height = 'auto';
                 input.style.height = input.scrollHeight + 'px';
             }
@@ -2313,7 +2350,6 @@ foreach ($data as $ip => $userData) {
                     const newImage = images[currentImageIndex];
                     currentFullImagePath = newImage.dataset.image;
                 } else {
-                    // For images opened from footer
                     const allImages = Array.from(document.querySelectorAll('.image-container'));
                     const currentIndex = allImages.findIndex(img => img.dataset.image === currentFullImagePath);
                     if (currentIndex !== -1) {
@@ -2420,10 +2456,8 @@ foreach ($data as $ip => $userData) {
                 });
             }
 
-            // Initialize the page
             initializeStarredImages();
 
-            // Add event listeners
             closeBtn.onclick = function() {
                 modal.style.display = 'none';
             }
@@ -2470,22 +2504,17 @@ foreach ($data as $ip => $userData) {
 
             const modalImageContainer = document.querySelector('.modal-image-container');
             modalImageContainer.addEventListener('wheel', function(e) {
-                e.preventDefault(); // Prevent default scrolling behavior
+                e.preventDefault();
                 if (e.deltaY > 0) {
-                    navigateModal(1); // Scroll down, go to next image
+                    navigateModal(1);
                 } else {
-                    navigateModal(-1); // Scroll up, go to previous image
+                    navigateModal(-1);
                 }
             });
 
             const pageTitle = document.querySelector('#page-title');
             pageTitle.addEventListener('click', function() {
-                window.location.href = '/';
-            });
-
-            const logo = document.querySelector('#logo-container svg');
-            logo.addEventListener('click', function() {
-                window.location.href = 'https://github.com/ktonini/reviewGrid';
+                window.location.href = window.location.pathname;
             });
 
             const userNameContainer = document.getElementById('user-name-container');
@@ -2503,8 +2532,8 @@ foreach ($data as $ip => $userData) {
                 if (e.target.closest('.image-wrapper img')) {
                     openModal(container);
                 } else if (e.target.classList.contains('star-button')) {
-                    e.preventDefault(); // Prevent opening the modal
-                    e.stopPropagation(); // Prevent event bubbling
+                    e.preventDefault();
+                    e.stopPropagation();
                     toggleStar(container);
                 } else if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
                     editComment(container);
@@ -2513,17 +2542,15 @@ foreach ($data as $ip => $userData) {
 
             const topBar = document.getElementById('top-bar');
             const starredFootersContainer = document.getElementById('starred-footers-container');
-            const maxScrollForShadow = 100; // Maximum scroll position for shadow effect
+            const maxScrollForShadow = 100;
 
             function handleScroll() {
                 const scrollPosition = window.scrollY;
                 const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
 
-                // Top bar shadow
                 const topShadowOpacity = Math.min(scrollPosition / maxScrollForShadow, 1);
                 topBar.style.boxShadow = `0 20px 10px rgba(0, 0, 0, ${topShadowOpacity * 0.4})`;
 
-                // Footer shadow
                 const bottomScrollPosition = maxScroll - scrollPosition;
                 const footerShadowOpacity = Math.min(bottomScrollPosition / maxScrollForShadow, 1);
                 starredFootersContainer.style.boxShadow = `0 -20px 10px rgba(0, 0, 0, ${footerShadowOpacity * 0.4})`;
@@ -2531,10 +2558,8 @@ foreach ($data as $ip => $userData) {
 
             window.addEventListener('scroll', handleScroll);
 
-            // Initial check in case the page is loaded scrolled
             handleScroll();
 
-            // Add this after the existing modal event listeners
             const modalCommentContainer = document.querySelector('#imageModal .comment-container');
             modalCommentContainer.addEventListener('click', function(e) {
                 if (e.target.closest('.comment-box.current-user') || e.target.closest('.comment-placeholder')) {
@@ -2542,7 +2567,6 @@ foreach ($data as $ip => $userData) {
                 }
             });
 
-            // Start the update check
             checkForUpdates();
 
             document.querySelectorAll('.minimize-button').forEach(button => {
@@ -2550,11 +2574,9 @@ foreach ($data as $ip => $userData) {
                     const footer = this.closest('.starred-footer');
                     const isMinimized = footer.classList.contains('minimized');
 
-                    // Toggle the minimized state
                     footer.classList.toggle('minimized');
                     this.textContent = isMinimized ? '▼' : '▲';
 
-                    // Use setTimeout to allow the DOM to update before we measure and scroll
                     setTimeout(() => {
                         updateFooterSpacerHeight();
                     }, 0);
@@ -2563,7 +2585,6 @@ foreach ($data as $ip => $userData) {
                 });
             });
 
-            // Modify the footer click event listener (for expanding minimized footers)
             document.querySelectorAll('.starred-footer').forEach(footer => {
                 footer.addEventListener('click', function() {
                     if (this.classList.contains('minimized')) {
@@ -2573,7 +2594,6 @@ foreach ($data as $ip => $userData) {
                             minimizeButton.textContent = '▼';
                         }
 
-                        // Use setTimeout to allow the DOM to update before we measure and scroll
                         setTimeout(() => {
                             updateFooterSpacerHeight();
                         }, 0);
@@ -2581,10 +2601,8 @@ foreach ($data as $ip => $userData) {
                 });
             });
 
-            // Call updateFooterSpacerHeight initially
             updateFooterSpacerHeight();
 
-            // Set the initial color for the top-user-name
             setTopUserNameColor();
         });
     </script>
@@ -2592,7 +2610,7 @@ foreach ($data as $ip => $userData) {
 
 <body>
     <div id="top-bar">
-        <div id="logo-container">
+        <a href="https://github.com/ktonini/reviewGrid" id="logo-container" title="View on GitHub">
             <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                 viewBox="0 0 153.16 144.09" style="enable-background:new 0 0 153.16 144.09;" xml:space="preserve" width="40" height="40">
                 <g>
@@ -2602,8 +2620,10 @@ foreach ($data as $ip => $userData) {
                     <path d="M45.6,43.8h107v21.8H68.2V122h62.6v-18H92.4V82h60.2v61.8h-21.8H45.6V43.8z" />
                 </g>
             </svg>
-        </div>
-        <h1 id="page-title"><?php echo htmlspecialchars($title); ?></h1>
+        </a>
+        <h1>
+            <a href="<?php echo $_SERVER['REQUEST_URI']; ?>" id="page-title"><?php echo $title; ?></a>
+        </h1>
         <div id="user-name-container">
             <span id="top-user-name" class="user-name editable" data-user-ip="<?php echo $user_ip; ?>"><?php echo htmlspecialchars($data[$user_ip]['name']); ?></span>
             <svg class="edit-icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 24 24" xml:space="preserve">
@@ -2650,7 +2670,7 @@ foreach ($data as $ip => $userData) {
                     <div class="starred-list-container">
                         <div class="starred-list">
                             <?php foreach ($userData['starred_images'] as $image):
-                                $thumbPath = $relativeThumbsUrl . '/' . preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $image);
+                                $thumbPath = $relativeThumbsUrl . '/' . preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '.webp', $image);
                                 $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $image;
                             ?>
                                 <div class="starred-thumbnail" data-full-image="<?php echo $fullImagePath; ?>">

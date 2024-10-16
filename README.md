@@ -33,13 +33,44 @@ This screenshot showcases the main interface of ReviewGrid, displaying the image
 
 ReviewGrid is perfect for quickly sharing and reviewing sets of images, whether for personal use, client presentations, or collaborative projects. Its self-contained nature means you can easily move, copy, or delete the gallery without complex setup or teardown procedures.
 
+## Dependencies
+
+ReviewGrid relies on the following dependencies:
+
+- PHP 8.0 or higher
+- GD extension for PHP with support for:
+  - JPEG
+  - PNG
+  - WebP
+
+These dependencies are typically included in most PHP installations. If you're using Docker, you can use the following Dockerfile snippet to ensure all necessary dependencies are installed:
+
+```dockerfile
+FROM php:8-fpm
+
+# Install dependencies for GD with support for JPEG, PNG, and WebP
+RUN apt-get update && \
+    apt-get install -y \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
+    zlib1g-dev && \
+    docker-php-ext-configure gd --with-jpeg --with-webp && \
+    docker-php-ext-install gd
+
+# Clean up apt cache to reduce image size
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+```
+
+This Dockerfile installs the necessary libraries and configures the GD extension with support for JPEG, PNG, and WebP.
+
 ## Installation
 
 1. Clone the repository:
    ```
    git clone https://github.com/ktonini/reviewGrid.git
    ```
-2. Ensure you have PHP installed on your server (PHP 7.0 or higher recommended).
+2. Ensure you have PHP installed on your server (PHP 8.0 or higher recommended).
 3. Place the `index.php` file in the directory containing the images you want to display.
 4. Ensure the web server has write permissions for the directory where `index.php` is located.
 5. Access the `index.php` file through your web browser.
