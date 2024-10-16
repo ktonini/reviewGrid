@@ -1510,6 +1510,88 @@ foreach ($data as $ip => $userData) {
             updateStarredFooters();
         }
 
+        function updateStarredFooters() {
+            let starredFootersContainer = document.getElementById('starred-footers-container');
+            if (!starredFootersContainer) {
+                starredFootersContainer = document.createElement('div');
+                starredFootersContainer.id = 'starred-footers-container';
+                document.body.appendChild(starredFootersContainer);
+            }
+
+            // Save current states before updating
+            document.querySelectorAll('.starred-footer').forEach(footer => {
+                const userIp = footer.dataset.userIp;
+                footerMinimizedStates[userIp] = footer.classList.contains('minimized');
+            });
+
+            updateUserFooter(currentUserIp, initialStarredImages, true);
+
+            if (userStarredImages) {
+                Object.keys(userStarredImages).forEach(userIp => {
+                    if (userIp !== currentUserIp) {
+                        updateUserFooter(userIp, userStarredImages[userIp].starred_images, false);
+                    }
+                });
+            }
+
+            updateFooterSpacerHeight();
+        }
+
+        function updateUserFooter(userIp, starredImages, isCurrentUser) {
+            const starredFootersContainer = document.getElementById('starred-footers-container');
+            let footer = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
+            const wasMinimized = footerMinimizedStates[userIp] !== undefined ? footerMinimizedStates[userIp] : !isCurrentUser;
+
+            if (starredImages.length > 0) {
+                if (!footer) {
+                    footer = createStarredFooter(userIp, starredImages, isCurrentUser);
+                    starredFootersContainer.appendChild(footer);
+                } else {
+                    const starredList = footer.querySelector('.starred-list');
+                    starredList.innerHTML = '';
+                    starredImages.forEach(imageName => {
+                        const thumbnail = createThumbnail(imageName, isCurrentUser);
+                        starredList.appendChild(thumbnail);
+                    });
+                }
+                
+                footer.classList.toggle('minimized', wasMinimized);
+                const minimizeButton = footer.querySelector('.minimize-button');
+                if (minimizeButton) {
+                    minimizeButton.textContent = wasMinimized ? '▲' : '▼';
+                }
+                
+                addFooterEventListeners(footer);
+                footer.style.display = 'grid';
+            } else if (footer) {
+                footer.style.display = 'none';
+            }
+
+            footerMinimizedStates[userIp] = wasMinimized;
+        }
+
+        function addFooterEventListeners(footer) {
+            const minimizeButton = footer.querySelector('.minimize-button');
+            const thumbnails = footer.querySelectorAll('.starred-thumbnail');
+            const downloadAllButton = footer.querySelector('.download-all-button');
+            const copyNamesButton = footer.querySelector('.copy-names-button');
+            const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
+            const userIp = footer.dataset.userIp;
+
+            if (minimizeButton) {
+                minimizeButton.addEventListener('click', function(event) {
+                    footer.classList.toggle('minimized');
+                    const isMinimized = footer.classList.contains('minimized');
+                    this.textContent = isMinimized ? '▲' : '▼';
+                    footerMinimizedStates[userIp] = isMinimized;
+                    updateFooterSpacerHeight();
+                    event.stopPropagation();
+                });
+            }
+
+            // ... rest of the function remains the same
+        }
+
         function updateCommentUI(container, newComments, isModal = false) {
             let commentContainerWrapper = container.querySelector('.comment-container-wrapper');
             if (!commentContainerWrapper) {
@@ -2005,6 +2087,12 @@ foreach ($data as $ip => $userData) {
                 starredFootersContainer.id = 'starred-footers-container';
                 document.body.appendChild(starredFootersContainer);
             }
+
+            // Save current states before updating
+            document.querySelectorAll('.starred-footer').forEach(footer => {
+                const userIp = footer.dataset.userIp;
+                footerMinimizedStates[userIp] = footer.classList.contains('minimized');
+            });
 
             updateUserFooter(currentUserIp, initialStarredImages, true);
 
