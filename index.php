@@ -1324,6 +1324,9 @@ foreach ($data as $ip => $userData) {
         let subDir = '<?php echo $subDir; ?>';
 
         // Add this near the top of your script, outside any functions
+        let footerMinimizedStates = {};
+
+        // Add this near the top of your script, outside any functions
         let currentFullImagePath = '';
 
         let userStarredImages = <?php echo json_encode($userStarredImages); ?>;
@@ -1913,6 +1916,18 @@ foreach ($data as $ip => $userData) {
             const downloadAllButton = footer.querySelector('.download-all-button');
             const copyNamesButton = footer.querySelector('.copy-names-button');
             const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
+            const userIp = footer.dataset.userIp;
+
+            if (minimizeButton) {
+                minimizeButton.addEventListener('click', function(event) {
+                    footer.classList.toggle('minimized');
+                    const isMinimized = footer.classList.contains('minimized');
+                    this.textContent = isMinimized ? '▲' : '▼';
+                    footerMinimizedStates[userIp] = isMinimized;
+                    updateFooterSpacerHeight();
+                    event.stopPropagation();
+                });
+            }
 
             thumbnails.forEach(thumbnail => {
                 const imageName = thumbnail.dataset.fullImage.split('/').pop();
@@ -2007,6 +2022,7 @@ foreach ($data as $ip => $userData) {
         function updateUserFooter(userIp, starredImages, isCurrentUser) {
             const starredFootersContainer = document.getElementById('starred-footers-container');
             let footer = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
+            const wasMinimized = footerMinimizedStates[userIp] !== undefined ? footerMinimizedStates[userIp] : !isCurrentUser;
 
             if (starredImages.length > 0) {
                 if (!footer) {
@@ -2019,20 +2035,21 @@ foreach ($data as $ip => $userData) {
                         const thumbnail = createThumbnail(imageName, isCurrentUser);
                         starredList.appendChild(thumbnail);
                     });
-
-                    if (!isCurrentUser && !footer.classList.contains('minimized')) {
-                        footer.classList.add('minimized');
-                        const minimizeButton = footer.querySelector('.minimize-button');
-                        if (minimizeButton) {
-                            minimizeButton.textContent = '▲';
-                        }
-                    }
                 }
+                
+                footer.classList.toggle('minimized', wasMinimized);
+                const minimizeButton = footer.querySelector('.minimize-button');
+                if (minimizeButton) {
+                    minimizeButton.textContent = wasMinimized ? '▲' : '▼';
+                }
+                
                 addFooterEventListeners(footer);
                 footer.style.display = 'grid';
             } else if (footer) {
                 footer.style.display = 'none';
             }
+
+            footerMinimizedStates[userIp] = wasMinimized;
         }
 
         function createStarredFooter(userIp, starredImages, isCurrentUser) {
@@ -2186,7 +2203,10 @@ foreach ($data as $ip => $userData) {
         }
 
         function updateOtherUserStarredImages(userIp, starredImages) {
+            console.debug("Updating starred images for user:", userIp);
             const userFooter = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
+            const wasMinimized = footerMinimizedStates[userIp] !== undefined ? footerMinimizedStates[userIp] : true;
+
             if (userFooter) {
                 const starredList = userFooter.querySelector('.starred-list');
                 starredList.innerHTML = '';
@@ -2195,8 +2215,29 @@ foreach ($data as $ip => $userData) {
                     starredList.appendChild(thumbnail);
                 });
                 userFooter.style.display = starredImages.length > 0 ? 'grid' : 'none';
-                addFooterEventListeners(userFooter);
+            } else {
+                // If the footer doesn't exist, create it
+                updateUserFooter(userIp, starredImages, false);
             }
+            
+            // Update the userStarredImages object
+            if (!userStarredImages[userIp]) {
+                userStarredImages[userIp] = {};
+            }
+            userStarredImages[userIp].starred_images = starredImages;
+
+            // Preserve the minimized state
+            const updatedFooter = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
+            if (updatedFooter) {
+                updatedFooter.classList.toggle('minimized', wasMinimized);
+                const minimizeButton = updatedFooter.querySelector('.minimize-button');
+                if (minimizeButton) {
+                    minimizeButton.textContent = wasMinimized ? '▲' : '▼';
+                }
+                addFooterEventListeners(updatedFooter);
+            }
+
+            footerMinimizedStates[userIp] = wasMinimized;
         }
 
         function updateUserName(userIp, newName) {
