@@ -515,7 +515,6 @@ foreach ($data as $ip => $userData) {
         .image-container.starred .star-button {
             color: #fff;
             background: transparent;
-            filter: drop-shadow(0 0 0.1rem #000);
             text-shadow:
                 /* White glow */
                 0 0 7px #fff,
@@ -582,7 +581,20 @@ foreach ($data as $ip => $userData) {
 
         .star-button.starred,
         .starred .star-button {
-            color: var(--star-color);
+            color: #fff;
+            background: transparent;
+            text-shadow:
+                /* White glow */
+                0 0 7px #fff,
+                /* 0 0 10px #fff, */
+                0 0 21px #fff,
+                /* Green glow */
+                0 0 42px var(--star-color),
+                0 0 82px var(--star-color),
+                0 0 92px var(--star-color),
+                0 0 102px var(--star-color),
+                0 0 151px var(--star-color);
+            overflow: visible;
         }
 
         .modal {
