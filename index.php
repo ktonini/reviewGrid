@@ -288,7 +288,7 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
             <img src="<?php echo $thumbPath; ?>" alt="<?php echo $title; ?>" data-full-image="<?php echo $fullImagePath; ?>">
             <button class="button star-button" title="Star" aria-label="Star image">★</button>
             <div class="hover-buttons">
-                <a href="<?php echo $fullImagePath; ?>" download class="button download-button" title="Download" aria-label="Download image">⬇</a>
+                <a href="<?php echo $fullImagePath; ?>" download class="button download-button" title="Download" aria-label="Download image"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></a>
             </div>
         </div>
         <div class="image-info">
@@ -454,6 +454,24 @@ foreach ($data as $ip => $userData) {
             overflow: hidden;
         }
 
+        .image-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .image-container.starred .image-wrapper::before {
+            opacity: 1;
+        }
+
         .image-container img {
             width: 100%;
             height: auto;
@@ -479,6 +497,7 @@ foreach ($data as $ip => $userData) {
             color: white;
             opacity: 0;
             transition: opacity 0.3s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+            z-index: 2;
         }
 
         .modal-content .star-button {
@@ -494,11 +513,21 @@ foreach ($data as $ip => $userData) {
         }
 
         .image-container.starred .star-button {
-            color: var(--star-color);
+            color: #fff;
             background: transparent;
             filter: drop-shadow(0 0 0.1rem #000);
-            -webkit-text-stroke: 2px white;
-            text-stroke: 2px white;
+            text-shadow:
+                /* White glow */
+                0 0 7px #fff,
+                /* 0 0 10px #fff, */
+                0 0 21px #fff,
+                /* Green glow */
+                0 0 42px var(--star-color),
+                0 0 82px var(--star-color),
+                0 0 92px var(--star-color),
+                0 0 102px var(--star-color),
+                0 0 151px var(--star-color);
+            overflow: visible;
         }
 
         .image-container:hover .star-button {
@@ -507,7 +536,8 @@ foreach ($data as $ip => $userData) {
 
         .image-container.starred:hover .star-button,
         .image-container:hover .star-button.starred {
-            color: var(--star-color);
+            color: #fff;
+            text-shadow: 0 0 15px var(--star-color);
         }
 
         .hover-buttons {
@@ -1314,6 +1344,45 @@ foreach ($data as $ip => $userData) {
             -webkit-backdrop-filter: blur(1.25rem);
             backdrop-filter: blur(1.25rem);
         }
+
+        .image-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg,
+                    rgba(0, 0, 0, 0.8) 0%,
+                    rgba(0, 0, 0, 0.7) 5%,
+                    rgba(0, 0, 0, 0.6) 10%,
+                    rgba(0, 0, 0, 0.5) 15%,
+                    rgba(0, 0, 0, 0.4) 20%,
+                    rgba(0, 0, 0, 0.3) 25%,
+                    rgba(0, 0, 0, 0.2) 30%,
+                    rgba(0, 0, 0, 0.1) 35%,
+                    rgba(0, 0, 0, 0) 40%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .image-container.starred .image-wrapper::before {
+            opacity: 1;
+        }
+
+        .star-button {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            z-index: 2;
+        }
     </style>
     <script>
         let initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
@@ -1336,6 +1405,8 @@ foreach ($data as $ip => $userData) {
         let modal, modalImg, modalTitle, closeBtn, prevBtn, nextBtn, modalStarButton, modalDownloadButton;
         let currentImageIndex = -1;
         let images = [];
+
+        const DOWNLOAD_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
 
         function initializeModalElements() {
             modal = document.getElementById('imageModal');
@@ -2181,11 +2252,7 @@ foreach ($data as $ip => $userData) {
                 footerButtons.className = 'footer-buttons';
                 footerButtons.innerHTML = `
             <button class="footer-button download-all-button" title="Download All">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
+                ${DOWNLOAD_SVG}
             </button>
             <button class="footer-button copy-names-button" title="Copy Names">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
@@ -2223,7 +2290,7 @@ foreach ($data as $ip => $userData) {
 
                 const downloadButton = document.createElement('button');
                 downloadButton.title = 'Download';
-                downloadButton.textContent = '⬇️';
+                downloadButton.innerHTML = DOWNLOAD_SVG;
                 buttonsContainer.appendChild(downloadButton);
 
                 thumbnail.appendChild(buttonsContainer);
@@ -2809,7 +2876,13 @@ foreach ($data as $ip => $userData) {
             </div>
             <button class="button next" title="Next">❯</button>
             <button id="modalStarButton" class="button star-button" title="Star">★</button>
-            <a id="modalDownloadButton" class="button download-button" title="Download" download>⬇</a>
+            <a id="modalDownloadButton" class="button download-button" title="Download" download>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </a>
             <div class="comment-container"></div>
         </div>
     </div>
@@ -2831,7 +2904,13 @@ foreach ($data as $ip => $userData) {
                                     <?php if ($ip === $user_ip): ?>
                                         <div class="thumbnail-buttons">
                                             <button title="Unstar">★</button>
-                                            <button title="Download">⬇️</button>
+                                            <button title="Download">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                </svg>
+                                            </button>
                                         </div>
                                     <?php endif; ?>
                                 </div>
