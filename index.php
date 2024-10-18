@@ -42,7 +42,8 @@ if (!file_exists($thumbsDir)) {
     mkdir($thumbsDir, 0755, true);
 }
 
-function getClientIP() {
+function getClientIP()
+{
     $ip_keys = array('HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR');
     foreach ($ip_keys as $key) {
         if (array_key_exists($key, $_SERVER) === true) {
@@ -75,16 +76,6 @@ if (!isset($data[$user_ip])) {
 // Ensure we have a name for the user (use IP if no name is set)
 $user_name = isset($data[$user_ip]['name']) ? $data[$user_ip]['name'] : $user_ip;
 
-// Add a new function to handle footer state updates
-function handleFooterStateUpdate()
-{
-    global $data, $user_ip, $usersFile;
-    $minimized = $_POST['minimized'] === 'true';
-    $data[$user_ip]['footer_minimized'] = $minimized;
-    file_put_contents($usersFile, json_encode($data));
-    echo json_encode(['success' => true]);
-}
-
 // Handle POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_name'])) {
@@ -97,6 +88,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         handleFooterStateUpdate();
     }
     exit;
+}
+
+// Add this new function
+function handleFooterStateUpdate()
+{
+    global $data, $user_ip, $usersFile;
+    $minimized = $_POST['minimized'] === 'true';
+    $data[$user_ip]['footer_minimized'] = $minimized;
+    file_put_contents($usersFile, json_encode($data));
+    echo json_encode(['success' => true]);
 }
 
 // Handle GET requests for updates
@@ -141,14 +142,14 @@ function createThumbnail($source, $destination, $width, $height)
 
     $imgString = file_get_contents($source);
     $image = imagecreatefromstring($imgString);
-    
+
     if (!$image) {
         // If imagecreatefromstring fails, try to create from WebP
         if (function_exists('imagecreatefromwebp')) {
             $image = imagecreatefromwebp($source);
         }
     }
-    
+
     if (!$image) {
         die("Unable to create image from source.");
     }
@@ -1554,13 +1555,13 @@ foreach ($data as $ip => $userData) {
                         starredList.appendChild(thumbnail);
                     });
                 }
-                
+
                 footer.classList.toggle('minimized', wasMinimized);
                 const minimizeButton = footer.querySelector('.minimize-button');
                 if (minimizeButton) {
                     minimizeButton.textContent = wasMinimized ? '▲' : '▼';
                 }
-                
+
                 addFooterEventListeners(footer);
                 footer.style.display = 'grid';
             } else if (footer) {
@@ -1578,18 +1579,18 @@ foreach ($data as $ip => $userData) {
             const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
             const userIp = footer.dataset.userIp;
 
-            if (minimizeButton) {
+            if (minimizeButton && !minimizeButton.hasEventListener) {
+                minimizeButton.hasEventListener = true;
                 minimizeButton.addEventListener('click', function(event) {
+                    event.stopPropagation();
                     footer.classList.toggle('minimized');
                     const isMinimized = footer.classList.contains('minimized');
+                    console.log('isMinimized in line 1587', isMinimized);
                     this.textContent = isMinimized ? '▲' : '▼';
                     footerMinimizedStates[userIp] = isMinimized;
                     updateFooterSpacerHeight();
-                    event.stopPropagation();
                 });
             }
-
-            // ... rest of the function remains the same
         }
 
         function updateCommentUI(container, newComments, isModal = false) {
@@ -2000,14 +2001,16 @@ foreach ($data as $ip => $userData) {
             const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
             const userIp = footer.dataset.userIp;
 
-            if (minimizeButton) {
+            if (minimizeButton && !minimizeButton.hasEventListener) {
+                minimizeButton.hasEventListener = true;
                 minimizeButton.addEventListener('click', function(event) {
+                    event.stopPropagation();
                     footer.classList.toggle('minimized');
                     const isMinimized = footer.classList.contains('minimized');
+                    console.log('isMinimized', isMinimized);
                     this.textContent = isMinimized ? '▲' : '▼';
                     footerMinimizedStates[userIp] = isMinimized;
                     updateFooterSpacerHeight();
-                    event.stopPropagation();
                 });
             }
 
@@ -2116,6 +2119,7 @@ foreach ($data as $ip => $userData) {
                 if (!footer) {
                     footer = createStarredFooter(userIp, starredImages, isCurrentUser);
                     starredFootersContainer.appendChild(footer);
+                    addFooterEventListeners(footer);
                 } else {
                     const starredList = footer.querySelector('.starred-list');
                     starredList.innerHTML = '';
@@ -2124,14 +2128,13 @@ foreach ($data as $ip => $userData) {
                         starredList.appendChild(thumbnail);
                     });
                 }
-                
+
                 footer.classList.toggle('minimized', wasMinimized);
                 const minimizeButton = footer.querySelector('.minimize-button');
                 if (minimizeButton) {
                     minimizeButton.textContent = wasMinimized ? '▲' : '▼';
                 }
-                
-                addFooterEventListeners(footer);
+
                 footer.style.display = 'grid';
             } else if (footer) {
                 footer.style.display = 'none';
@@ -2307,7 +2310,7 @@ foreach ($data as $ip => $userData) {
                 // If the footer doesn't exist, create it
                 updateUserFooter(userIp, starredImages, false);
             }
-            
+
             // Update the userStarredImages object
             if (!userStarredImages[userIp]) {
                 userStarredImages[userIp] = {};
@@ -2698,38 +2701,59 @@ foreach ($data as $ip => $userData) {
 
             checkForUpdates();
 
-            document.querySelectorAll('.minimize-button').forEach(button => {
-                button.addEventListener('click', function(event) {
-                    const footer = this.closest('.starred-footer');
-                    const isMinimized = footer.classList.contains('minimized');
+            starredFootersContainer.addEventListener('click', function(event) {
+                const target = event.target;
+                const footer = target.closest('.starred-footer');
 
+                if (!footer) return;
+
+                if (target.classList.contains('minimize-button')) {
+                    const isMinimized = footer.classList.contains('minimized');
                     footer.classList.toggle('minimized');
-                    this.textContent = isMinimized ? '▼' : '▲';
+                    target.textContent = isMinimized ? '▼' : '▲';
+
+                    // Update the server about the footer state
+                    updateFooterState(footer.dataset.userIp, !isMinimized);
 
                     setTimeout(() => {
                         updateFooterSpacerHeight();
                     }, 0);
 
                     event.stopPropagation();
-                });
-            });
-
-            document.querySelectorAll('.starred-footer').forEach(footer => {
-                footer.addEventListener('click', function() {
-                    if (this.classList.contains('minimized')) {
-                        this.classList.remove('minimized');
-                        const minimizeButton = this.querySelector('.minimize-button');
-                        if (minimizeButton) {
-                            minimizeButton.textContent = '▼';
-                        }
-
-                        setTimeout(() => {
-                            updateFooterSpacerHeight();
-                        }, 0);
+                } else if (footer.classList.contains('minimized')) {
+                    footer.classList.remove('minimized');
+                    const minimizeButton = footer.querySelector('.minimize-button');
+                    if (minimizeButton) {
+                        minimizeButton.textContent = '▼';
                     }
-                });
+
+                    // Update the server about the footer state
+                    updateFooterState(footer.dataset.userIp, false);
+
+                    setTimeout(() => {
+                        updateFooterSpacerHeight();
+                    }, 0);
+                }
             });
 
+            function updateFooterState(userIp, isMinimized) {
+                fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `update_footer_state=1&user_ip=${encodeURIComponent(userIp)}&minimized=${isMinimized}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            console.error('Failed to update footer state');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
             updateFooterSpacerHeight();
 
             setTopUserNameColor();
