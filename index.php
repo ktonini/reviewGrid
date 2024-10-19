@@ -1563,10 +1563,15 @@ foreach ($data as $ip => $userData) {
             if (imageContainer) {
                 imageContainer.classList.toggle('starred', newStarredState);
             }
-            if (modalStarButton) {
+            if (modalStarButton && currentFullImagePath === imageName) {
                 updateStarButton(modalStarButton, newStarredState);
             }
             updateStarredFooters();
+
+            // If the modal is open and showing this image, update it
+            if (modal.style.display === 'block' && currentFullImagePath === imageName) {
+                updateModalContent();
+            }
 
             console.debug("Sending fetch request for:", imageName);
             fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
@@ -2379,6 +2384,38 @@ foreach ($data as $ip => $userData) {
             });
 
             updateMainGalleryStars(data[currentUserIp].starred_images);
+
+            // Update modal if it's open
+            if (modal.style.display === 'block') {
+                updateModalContent();
+            }
+        }
+
+        function updateModalContent() {
+            if (currentFullImagePath) {
+                const imageName = currentFullImagePath.split('/').pop();
+                const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+                
+                if (imageContainer) {
+                    // Update star status
+                    const isStarred = imageContainer.classList.contains('starred');
+                    updateStarButton(modalStarButton, isStarred);
+
+                    // Update comments
+                    const commentContainer = modal.querySelector('.comment-container');
+                    const imageComments = imageContainer.querySelector('.comment-container');
+                    if (commentContainer && imageComments) {
+                        commentContainer.innerHTML = imageComments.innerHTML;
+                    }
+
+                    // Update title
+                    const modalTitle = document.getElementById('modalTitle');
+                    const imageTitle = imageContainer.querySelector('.image-title');
+                    if (modalTitle && imageTitle) {
+                        modalTitle.textContent = imageTitle.textContent;
+                    }
+                }
+            }
         }
 
         function updateOtherUserStarredImages(userIp, starredImages) {
