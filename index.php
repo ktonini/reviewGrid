@@ -1355,6 +1355,7 @@ foreach ($data as $ip => $userData) {
             background-color: rgba(44, 44, 44, 0.8);
             -webkit-backdrop-filter: blur(1.25rem);
             backdrop-filter: blur(1.25rem);
+            z-index: 1000;
         }
 
         .image-wrapper {
@@ -2889,14 +2890,9 @@ foreach ($data as $ip => $userData) {
 <body>
     <div id="top-bar">
         <a href="https://github.com/ktonini/reviewGrid" id="logo-container" title="View on GitHub">
-            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-                viewBox="0 0 153.16 144.09" style="enable-background:new 0 0 153.16 144.09;" xml:space="preserve" width="40" height="40">
-                <g>
-                    <path d="M153.16,0v21.8H22.6v122.29H0V0H153.16z" />
-                </g>
-                <g>
-                    <path d="M45.6,43.8h107v21.8H68.2V122h62.6v-18H92.4V82h60.2v61.8h-21.8H45.6V43.8z" />
-                </g>
+            <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 157.24 157.67" width="40" height="40">
+                <path d="M157.24,5.63v11.81c0,3.04-2.46,5.5-5.5,5.49l-123.64-.13c-3.04,0-5.5,2.46-5.5,5.49v123.88c0,3.03-2.46,5.49-5.49,5.49H5.49c-3.03,0-5.49-2.46-5.49-5.49V5.49C0,2.46,2.46,0,5.5,0l146.26.13c3.03,0,5.49,2.46,5.49,5.49Z"/>
+                <path d="M50.58,45.31l101.18.13c3.03,0,5.49,2.46,5.49,5.49v11.81c0,3.04-2.47,5.5-5.5,5.49l-78.56-.13c-3.04,0-5.5,2.46-5.5,5.49l.1,56.63c0,3.03,2.45,5.49,5.48,5.49l56.57.12c3.04,0,5.51-2.45,5.51-5.49l-.04-11.6c0-3.03-2.46-5.49-5.49-5.49h-33.97c-3.03,0-5.55-2.48-5.55-5.51v-11.61c0-3.03,2.45-5.49,5.48-5.49h55.88c3.03,0,5.49,2.46,5.49,5.49l.1,56.03c0,3.03-2.46,5.49-5.49,5.49h-17.12s-83.97-.13-83.97-.13c-3.03,0-5.48-2.46-5.48-5.49l-.1-101.23c0-3.04,2.46-5.5,5.5-5.49Z"/>
             </svg>
         </a>
         <h1>
