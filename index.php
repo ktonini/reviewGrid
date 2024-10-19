@@ -648,7 +648,7 @@ foreach ($data as $ip => $userData) {
             height: 1.5em;
             overflow: hidden;
             border: none;
-            background-color: #333;
+            /* background-color: #333; */
             font-size: 2rem;
             cursor: pointer;
             align-self: center;
@@ -1539,9 +1539,9 @@ foreach ($data as $ip => $userData) {
             let imageName, imageContainer, starButton;
 
             if (typeof imageContainerOrName === 'string') {
-                imageName = imageContainerOrName.replace(/^\//, '');
+                imageName = imageContainerOrName;
                 imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
-                starButton = imageContainer ? imageContainer.querySelector('.star-button') : modalStarButton;
+                starButton = imageContainer ? imageContainer.querySelector('.star-button') : null;
                 console.debug("String input - imageName:", imageName);
             } else {
                 imageContainer = imageContainerOrName;
@@ -1557,11 +1557,15 @@ foreach ($data as $ip => $userData) {
             console.debug("New starred state:", newStarredState);
 
             updateStarredState(imageName, newStarredState);
-            updateStarButton(starButton, newStarredState);
+            if (starButton) {
+                updateStarButton(starButton, newStarredState);
+            }
             if (imageContainer) {
                 imageContainer.classList.toggle('starred', newStarredState);
             }
-            updateStarButton(modalStarButton, newStarredState);
+            if (modalStarButton) {
+                updateStarButton(modalStarButton, newStarredState);
+            }
             updateStarredFooters();
 
             console.debug("Sending fetch request for:", imageName);
@@ -2110,7 +2114,8 @@ foreach ($data as $ip => $userData) {
                     const unstarButton = thumbnail.querySelector('button[title="Unstar"]');
                     const downloadButton = thumbnail.querySelector('button[title="Download"]');
 
-                    if (unstarButton) {
+                    if (unstarButton && !unstarButton.hasEventListener) {
+                        unstarButton.hasEventListener = true;
                         unstarButton.addEventListener('click', (event) => {
                             event.stopPropagation();
                             toggleStar(imageName);
@@ -2298,6 +2303,10 @@ foreach ($data as $ip => $userData) {
                 const unstarButton = document.createElement('button');
                 unstarButton.title = 'Unstar';
                 unstarButton.textContent = '★';
+                unstarButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    toggleStar(imageName);
+                });
                 buttonsContainer.appendChild(unstarButton);
 
                 const downloadButton = document.createElement('button');
