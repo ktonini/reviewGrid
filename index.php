@@ -1091,6 +1091,8 @@ foreach ($data as $ip => $userData) {
             justify-content: center;
             align-items: center;
             padding: 0.5rem;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
             background-color: rgba(44, 44, 44, 0.8);
             backdrop-filter: blur(1.25rem);
             -webkit-backdrop-filter: blur(1.25rem);
@@ -1641,6 +1643,7 @@ foreach ($data as $ip => $userData) {
                     footer = createStarredFooter(userIp, starredImages, isCurrentUser);
                     starredFootersContainer.appendChild(footer);
                 } else {
+                    addFooterEventListeners(footer);
                     const starredList = footer.querySelector('.starred-list');
                     starredList.innerHTML = '';
                     starredImages.forEach(imageName => {
@@ -1655,35 +1658,13 @@ foreach ($data as $ip => $userData) {
                     minimizeButton.textContent = wasMinimized ? '▲' : '▼';
                 }
 
-                addFooterEventListeners(footer);
+
                 footer.style.display = 'grid';
             } else if (footer) {
                 footer.style.display = 'none';
             }
 
             footerMinimizedStates[userIp] = wasMinimized;
-        }
-
-        function addFooterEventListeners(footer) {
-            const minimizeButton = footer.querySelector('.minimize-button');
-            const thumbnails = footer.querySelectorAll('.starred-thumbnail');
-            const downloadAllButton = footer.querySelector('.download-all-button');
-            const copyNamesButton = footer.querySelector('.copy-names-button');
-            const isCurrentUserFooter = footer.dataset.userIp === currentUserIp;
-            const userIp = footer.dataset.userIp;
-
-            if (minimizeButton && !minimizeButton.hasEventListener) {
-                minimizeButton.hasEventListener = true;
-                minimizeButton.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                    footer.classList.toggle('minimized');
-                    const isMinimized = footer.classList.contains('minimized');
-                    console.log('isMinimized in line 1587', isMinimized);
-                    this.textContent = isMinimized ? '▲' : '▼';
-                    footerMinimizedStates[userIp] = isMinimized;
-                    updateFooterSpacerHeight();
-                });
-            }
         }
 
         function updateCommentUI(container, newComments, isModal = false) {
@@ -2087,6 +2068,8 @@ foreach ($data as $ip => $userData) {
         }
 
         function addFooterEventListeners(footer) {
+            // console.count('addFooterEventListeners');
+            // console.log('footer', footer);
             const minimizeButton = footer.querySelector('.minimize-button');
             const thumbnails = footer.querySelectorAll('.starred-thumbnail');
             const downloadAllButton = footer.querySelector('.download-all-button');
@@ -2202,39 +2185,6 @@ foreach ($data as $ip => $userData) {
             }
 
             updateFooterSpacerHeight();
-        }
-
-        function updateUserFooter(userIp, starredImages, isCurrentUser) {
-            const starredFootersContainer = document.getElementById('starred-footers-container');
-            let footer = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
-            const wasMinimized = footerMinimizedStates[userIp] !== undefined ? footerMinimizedStates[userIp] : !isCurrentUser;
-
-            if (starredImages.length > 0) {
-                if (!footer) {
-                    footer = createStarredFooter(userIp, starredImages, isCurrentUser);
-                    starredFootersContainer.appendChild(footer);
-                    addFooterEventListeners(footer);
-                } else {
-                    const starredList = footer.querySelector('.starred-list');
-                    starredList.innerHTML = '';
-                    starredImages.forEach(imageName => {
-                        const thumbnail = createThumbnail(imageName, isCurrentUser);
-                        starredList.appendChild(thumbnail);
-                    });
-                }
-
-                footer.classList.toggle('minimized', wasMinimized);
-                const minimizeButton = footer.querySelector('.minimize-button');
-                if (minimizeButton) {
-                    minimizeButton.textContent = wasMinimized ? '▲' : '▼';
-                }
-
-                footer.style.display = 'grid';
-            } else if (footer) {
-                footer.style.display = 'none';
-            }
-
-            footerMinimizedStates[userIp] = wasMinimized;
         }
 
         function createStarredFooter(userIp, starredImages, isCurrentUser) {
