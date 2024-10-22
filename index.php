@@ -816,8 +816,8 @@ foreach ($data as $ip => $userData) {
 
         .starred-thumbnail {
             position: relative;
-            width: 5rem;
-            height: 5rem;
+            width: clamp(2.5rem, 8vw, 5rem);
+            height: clamp(2.5rem, 8vw, 5rem);
             cursor: pointer;
         }
 
@@ -1436,6 +1436,51 @@ foreach ($data as $ip => $userData) {
         #other-users-container .starred-footer {
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        .starred-thumbnail {
+            position: relative;
+            width: clamp(2.5rem, 8vw, 5rem);
+            height: clamp(2.5rem, 8vw, 5rem);
+            cursor: pointer;
+        }
+
+        .starred-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 0.625rem;
+        }
+
+        .starred-thumbnail .thumbnail-buttons {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+            height: 50%;
+            justify-items: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            gap: 0.25rem;
+            margin: 0.25rem;
+        }
+
+        .starred-thumbnail:hover .thumbnail-buttons {
+            opacity: 1;
+        }
+
+        @media screen and (max-width: 1000px) {
+            .starred-footer[data-user-ip="<?php echo $user_ip; ?>"] .starred-thumbnail .thumbnail-buttons {
+                display: none;
+            }
+
+            .starred-footer[data-user-ip="<?php echo $user_ip; ?>"] .starred-thumbnail:hover .thumbnail-buttons {
+                opacity: 0;
+            }
+        }
     </style>
     <script>
         let initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
@@ -1690,16 +1735,16 @@ foreach ($data as $ip => $userData) {
             if (existingOtherUsersContainer) existingOtherUsersContainer.remove();
             if (existingOtherUsersToggle) existingOtherUsersToggle.remove();
 
-            if (otherUsersCount >= 2) {
-                // Create submenu for multiple other users
+            if (otherUsersCount > 0) {
+                // Create submenu for other users
                 const otherUsersToggle = document.createElement('div');
                 otherUsersToggle.id = 'other-users-toggle';
                 otherUsersToggle.className = isOtherUsersMinimized ? 'minimized' : '';
                 otherUsersToggle.innerHTML = `
-                    <button class="minimize-button" title="Toggle Other Users">${isOtherUsersMinimized ? '▲' : '▼'}</button>
-                    <span>Other Users</span>
-                    <span class="user-count-badge">${otherUsersCount}</span>
-                `;
+        <button class="minimize-button" title="Toggle Other Users">${isOtherUsersMinimized ? '▲' : '▼'}</button>
+        <span>Other Users</span>
+        <span class="user-count-badge">${otherUsersCount}</span>
+    `;
                 otherUsersToggle.addEventListener('click', toggleOtherUsers);
                 starredFootersContainer.appendChild(otherUsersToggle);
 
@@ -1723,9 +1768,9 @@ foreach ($data as $ip => $userData) {
 
         // Modify the updateUserFooter function
         function updateUserFooter(userIp, starredImages, isCurrentUser) {
-            const container = isCurrentUser || Object.keys(userStarredImages).length <= 2 ?
+            const container = isCurrentUser ?
                 document.getElementById('starred-footers-container') :
-                document.getElementById('other-users-container');
+                document.getElementById('other-users-container') || document.getElementById('starred-footers-container');
 
             if (!container) return;
 
@@ -2371,6 +2416,13 @@ foreach ($data as $ip => $userData) {
 
             thumbnail.appendChild(img);
 
+            // Add click event to open modal for all users
+            thumbnail.addEventListener('click', (event) => {
+                if (event.target === thumbnail || event.target.tagName === 'IMG') {
+                    openModal(imageName);
+                }
+            });
+
             if (isCurrentUser) {
                 const buttonsContainer = document.createElement('div');
                 buttonsContainer.className = 'thumbnail-buttons';
@@ -2387,12 +2439,26 @@ foreach ($data as $ip => $userData) {
                 const downloadButton = document.createElement('button');
                 downloadButton.title = 'Download';
                 downloadButton.innerHTML = DOWNLOAD_SVG;
+                downloadButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    downloadImage(`${baseUrl}${subDir ? '/' + subDir : ''}/${imageName}`);
+                });
                 buttonsContainer.appendChild(downloadButton);
 
                 thumbnail.appendChild(buttonsContainer);
             }
 
             return thumbnail;
+        }
+
+        // Make sure this function is defined
+        function downloadImage(imageUrl) {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = imageUrl.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function updateFooterSpacerHeight() {
