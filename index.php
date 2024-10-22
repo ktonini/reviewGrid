@@ -1205,7 +1205,7 @@ foreach ($data as $ip => $userData) {
         .image-container .comment-container-wrapper {
             position: relative;
             max-height: 9.375rem;
-            margin-bottom: 0.625rem;
+            /* margin-bottom: 0.625rem; */
             border-radius: 0.5rem;
             overflow: hidden;
         }
