@@ -1530,56 +1530,6 @@ foreach ($data as $ip => $userData) {
             }
         }
 
-        function updateModal() {
-            console.debug("Updating modal, currentImageIndex:", currentImageIndex);
-            if (currentImageIndex >= 0) {
-                const currentImage = images[currentImageIndex];
-                const imageSrc = currentImage.querySelector('img').dataset.fullImage;
-                const thumbnailSrc = imageSrc.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '.webp');
-                const imageTitle = currentImage.querySelector('.image-title').textContent;
-                const isStarred = currentImage.classList.contains('starred');
-
-                modalImg.src = imageSrc;
-                modalImg.alt = imageTitle;
-                modalTitle.textContent = imageTitle;
-                updateStarButton(modalStarButton, isStarred);
-                modalDownloadButton.href = imageSrc;
-                modalDownloadButton.download = imageSrc.split('/').pop();
-                currentFullImagePath = imageSrc.split('/').pop(); // Store only the filename
-
-                // Update comments
-                updateModalComments(currentImage);
-
-                // Show navigation buttons
-                prevBtn.style.display = 'flex';
-                nextBtn.style.display = 'flex';
-            } else {
-                // Handle case for images not in the current view (e.g., from footer)
-                const imageTitle = currentFullImagePath.split('/').pop();
-                const thumbnailSrc = `${relativeThumbsUrl}/${imageTitle.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '.webp')}`;
-
-                modalImg.src = `${baseUrl}${subDir ? '/' + subDir : ''}/${currentFullImagePath}`;
-                modalImg.alt = imageTitle;
-                modalTitle.textContent = imageTitle;
-                updateStarButton(modalStarButton, initialStarredImages.includes(currentFullImagePath));
-                modalDownloadButton.href = modalImg.src;
-                modalDownloadButton.download = imageTitle;
-
-                // Clear comments for footer images
-                const commentContainer = modal.querySelector('.comment-container');
-                commentContainer.innerHTML = ''; // Clear existing comments
-                const commentPlaceholder = document.createElement('div');
-                commentPlaceholder.className = 'comment-placeholder';
-                commentPlaceholder.textContent = 'Comment';
-                commentPlaceholder.addEventListener('click', () => editModalComment(currentFullImagePath));
-                commentContainer.appendChild(commentPlaceholder);
-
-                // Hide navigation buttons for footer images
-                prevBtn.style.display = 'none';
-                nextBtn.style.display = 'none';
-            }
-            console.debug("currentFullImagePath set to:", currentFullImagePath);
-        }
 
         function updateModalComments(currentImage) {
             const commentContainer = modal.querySelector('.comment-container');
@@ -2629,6 +2579,89 @@ foreach ($data as $ip => $userData) {
             console.info("CurrentFullImagePath set to:", currentFullImagePath);
             updateModal();
             modal.style.display = 'block';
+
+            // Force layout recalculation
+            modal.offsetHeight;
+        }
+
+        function updateModal() {
+            console.debug("Updating modal, currentImageIndex:", currentImageIndex);
+            const imageName = currentFullImagePath.split('/').pop();
+            const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
+
+            // Clear existing content
+            modalImg.src = '';
+            modalImg.alt = '';
+            modalTitle.textContent = '';
+            const commentContainer = modal.querySelector('.comment-container');
+            commentContainer.innerHTML = '';
+
+            // Set loading state
+            modalImg.style.opacity = '0';
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.textContent = 'Loading...';
+            loadingIndicator.style.position = 'absolute';
+            loadingIndicator.style.top = '50%';
+            loadingIndicator.style.left = '50%';
+            loadingIndicator.style.transform = 'translate(-50%, -50%)';
+            modal.querySelector('.modal-image-container').appendChild(loadingIndicator);
+
+            if (imageContainer) {
+                // Image is in the main gallery
+                const imageSrc = imageContainer.querySelector('img').dataset.fullImage;
+                const imageTitle = imageContainer.querySelector('.image-title').textContent;
+                const isStarred = imageContainer.classList.contains('starred');
+
+                modalImg.onload = function() {
+                    modalImg.style.opacity = '1';
+                    loadingIndicator.remove();
+                };
+                modalImg.src = imageSrc;
+                modalImg.alt = imageTitle;
+                modalTitle.textContent = imageTitle;
+                updateStarButton(modalStarButton, isStarred);
+                modalDownloadButton.href = imageSrc;
+                modalDownloadButton.download = imageName;
+
+                updateModalComments(imageContainer);
+
+                // Show navigation buttons for main gallery images
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
+            } else {
+                // Image is from footer
+                const imageSrc = `${baseUrl}${subDir ? '/' + subDir : ''}/${imageName}`;
+
+                modalImg.onload = function() {
+                    modalImg.style.opacity = '1';
+                    loadingIndicator.remove();
+                };
+                modalImg.src = imageSrc;
+                modalImg.alt = imageName;
+                modalTitle.textContent = imageName;
+                updateStarButton(modalStarButton, initialStarredImages.includes(imageName));
+                modalDownloadButton.href = imageSrc;
+                modalDownloadButton.download = imageName;
+
+                // Clear comments for footer images
+                const commentPlaceholder = document.createElement('div');
+                commentPlaceholder.className = 'comment-placeholder';
+                commentPlaceholder.textContent = 'Comment';
+                commentPlaceholder.addEventListener('click', () => editModalComment(imageName));
+                commentContainer.appendChild(commentPlaceholder);
+
+                // Hide navigation buttons for footer images
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+
+            // Ensure modal content fits within the screen
+            modalImg.style.maxWidth = '100%';
+            modalImg.style.height = 'auto';
+            modalImg.style.maxHeight = '60vh';
+
+            // Force layout recalculation
+            modal.offsetHeight;
         }
 
         function downloadImage(imageName) {
