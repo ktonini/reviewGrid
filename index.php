@@ -288,7 +288,11 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
             <img src="<?php echo $thumbPath; ?>" alt="<?php echo $title; ?>" data-full-image="<?php echo $fullImagePath; ?>">
             <button class="button star-button" title="Star" aria-label="Star image">★</button>
             <div class="hover-buttons">
-                <a href="<?php echo $fullImagePath; ?>" download class="button download-button" title="Download" aria-label="Download image"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></a>
+                <a href="<?php echo $fullImagePath; ?>" download class="button download-button" title="Download" aria-label="Download image"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg></a>
             </div>
         </div>
         <div class="image-info">
@@ -746,7 +750,6 @@ foreach ($data as $ip => $userData) {
             background-color: rgba(44, 44, 44, 0.8);
             backdrop-filter: blur(1.25rem);
             -webkit-backdrop-filter: blur(1.25rem);
-            padding-bottom: 0.625rem;
         }
 
         .starred-footer {
@@ -1398,6 +1401,41 @@ foreach ($data as $ip => $userData) {
             left: 0.25rem;
             z-index: 2;
         }
+
+        #other-users-toggle {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            cursor: pointer;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #other-users-toggle .minimize-button {
+            margin-right: 0.5rem;
+        }
+
+        #other-users-toggle .user-count-badge {
+            background-color: #646464;
+            color: #fff;
+            border-radius: 50%;
+            padding: 0 0.4rem;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+            text-align: center;
+            display: inline-block;
+            font-weight: bold;
+            border: 2px solid #a3a3a3;
+            ;
+        }
+
+        #other-users-container {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        #other-users-container .starred-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
     </style>
     <script>
         let initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
@@ -1606,6 +1644,25 @@ foreach ($data as $ip => $userData) {
             updateStarredFooters();
         }
 
+        // Add this variable at the top of your script, with your other state variables
+        let isOtherUsersMinimized = true;
+
+        // Modify the toggleOtherUsers function
+        function toggleOtherUsers() {
+            const otherUsersToggle = document.getElementById('other-users-toggle');
+            const otherUsersContainer = document.getElementById('other-users-container');
+            isOtherUsersMinimized = !isOtherUsersMinimized;
+
+            otherUsersToggle.classList.toggle('minimized', isOtherUsersMinimized);
+            otherUsersContainer.style.display = isOtherUsersMinimized ? 'none' : 'block';
+
+            const toggleButton = otherUsersToggle.querySelector('.minimize-button');
+            toggleButton.textContent = isOtherUsersMinimized ? '▲' : '▼';
+
+            updateFooterSpacerHeight();
+        }
+
+        // Modify the updateStarredFooters function
         function updateStarredFooters() {
             let starredFootersContainer = document.getElementById('starred-footers-container');
             if (!starredFootersContainer) {
@@ -1620,28 +1677,65 @@ foreach ($data as $ip => $userData) {
                 footerMinimizedStates[userIp] = footer.classList.contains('minimized');
             });
 
+            // Update current user's footer
             updateUserFooter(currentUserIp, initialStarredImages, true);
 
-            if (userStarredImages) {
-                Object.keys(userStarredImages).forEach(userIp => {
-                    if (userIp !== currentUserIp) {
-                        updateUserFooter(userIp, userStarredImages[userIp].starred_images, false);
-                    }
+            // Count other users
+            const otherUsers = Object.keys(userStarredImages).filter(ip => ip !== currentUserIp);
+            const otherUsersCount = otherUsers.length;
+
+            // Remove existing other users container and toggle if they exist
+            const existingOtherUsersContainer = document.getElementById('other-users-container');
+            const existingOtherUsersToggle = document.getElementById('other-users-toggle');
+            if (existingOtherUsersContainer) existingOtherUsersContainer.remove();
+            if (existingOtherUsersToggle) existingOtherUsersToggle.remove();
+
+            if (otherUsersCount >= 2) {
+                // Create submenu for multiple other users
+                const otherUsersToggle = document.createElement('div');
+                otherUsersToggle.id = 'other-users-toggle';
+                otherUsersToggle.className = isOtherUsersMinimized ? 'minimized' : '';
+                otherUsersToggle.innerHTML = `
+                    <button class="minimize-button" title="Toggle Other Users">${isOtherUsersMinimized ? '▲' : '▼'}</button>
+                    <span>Other Users</span>
+                    <span class="user-count-badge">${otherUsersCount}</span>
+                `;
+                otherUsersToggle.addEventListener('click', toggleOtherUsers);
+                starredFootersContainer.appendChild(otherUsersToggle);
+
+                const otherUsersContainer = document.createElement('div');
+                otherUsersContainer.id = 'other-users-container';
+                otherUsersContainer.style.display = isOtherUsersMinimized ? 'none' : 'block';
+                starredFootersContainer.appendChild(otherUsersContainer);
+
+                // Update other users' footers in the submenu
+                otherUsers.forEach(userIp => {
+                    updateUserFooter(userIp, userStarredImages[userIp].starred_images, false);
                 });
+            } else if (otherUsersCount === 1) {
+                // Display the single other user's footer without submenu
+                const singleOtherUserIp = otherUsers[0];
+                updateUserFooter(singleOtherUserIp, userStarredImages[singleOtherUserIp].starred_images, false);
             }
 
             updateFooterSpacerHeight();
         }
 
+        // Modify the updateUserFooter function
         function updateUserFooter(userIp, starredImages, isCurrentUser) {
-            const starredFootersContainer = document.getElementById('starred-footers-container');
-            let footer = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
+            const container = isCurrentUser || Object.keys(userStarredImages).length <= 2 ?
+                document.getElementById('starred-footers-container') :
+                document.getElementById('other-users-container');
+
+            if (!container) return;
+
+            let footer = container.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
             const wasMinimized = footerMinimizedStates[userIp] !== undefined ? footerMinimizedStates[userIp] : !isCurrentUser;
 
             if (starredImages.length > 0) {
                 if (!footer) {
                     footer = createStarredFooter(userIp, starredImages, isCurrentUser);
-                    starredFootersContainer.appendChild(footer);
+                    container.appendChild(footer);
                 } else {
                     addFooterEventListeners(footer);
                     const starredList = footer.querySelector('.starred-list');
@@ -1658,10 +1752,9 @@ foreach ($data as $ip => $userData) {
                     minimizeButton.textContent = wasMinimized ? '▲' : '▼';
                 }
 
-
                 footer.style.display = 'grid';
             } else if (footer) {
-                footer.style.display = 'none';
+                footer.remove();
             }
 
             footerMinimizedStates[userIp] = wasMinimized;
@@ -2068,8 +2161,6 @@ foreach ($data as $ip => $userData) {
         }
 
         function addFooterEventListeners(footer) {
-            // console.count('addFooterEventListeners');
-            // console.log('footer', footer);
             const minimizeButton = footer.querySelector('.minimize-button');
             const thumbnails = footer.querySelectorAll('.starred-thumbnail');
             const downloadAllButton = footer.querySelector('.download-all-button');
@@ -2083,7 +2174,6 @@ foreach ($data as $ip => $userData) {
                     event.stopPropagation();
                     footer.classList.toggle('minimized');
                     const isMinimized = footer.classList.contains('minimized');
-                    console.log('isMinimized', isMinimized);
                     this.textContent = isMinimized ? '▲' : '▼';
                     footerMinimizedStates[userIp] = isMinimized;
                     updateFooterSpacerHeight();
@@ -2174,14 +2264,45 @@ foreach ($data as $ip => $userData) {
                 footerMinimizedStates[userIp] = footer.classList.contains('minimized');
             });
 
+            // Update current user's footer
             updateUserFooter(currentUserIp, initialStarredImages, true);
 
-            if (userStarredImages) {
-                Object.keys(userStarredImages).forEach(userIp => {
-                    if (userIp !== currentUserIp) {
-                        updateUserFooter(userIp, userStarredImages[userIp].starred_images, false);
-                    }
+            // Count other users
+            const otherUsers = Object.keys(userStarredImages).filter(ip => ip !== currentUserIp);
+            const otherUsersCount = otherUsers.length;
+
+            // Remove existing other users container and toggle if they exist
+            const existingOtherUsersContainer = document.getElementById('other-users-container');
+            const existingOtherUsersToggle = document.getElementById('other-users-toggle');
+            if (existingOtherUsersContainer) existingOtherUsersContainer.remove();
+            if (existingOtherUsersToggle) existingOtherUsersToggle.remove();
+
+            if (otherUsersCount >= 2) {
+                // Create submenu for multiple other users
+                const otherUsersToggle = document.createElement('div');
+                otherUsersToggle.id = 'other-users-toggle';
+                otherUsersToggle.className = isOtherUsersMinimized ? 'minimized' : '';
+                otherUsersToggle.innerHTML = `
+                    <button class="minimize-button" title="Toggle Other Users">${isOtherUsersMinimized ? '▲' : '▼'}</button>
+                    <span>Other Users</span>
+                    <span class="user-count-badge">${otherUsersCount}</span>
+                `;
+                otherUsersToggle.addEventListener('click', toggleOtherUsers);
+                starredFootersContainer.appendChild(otherUsersToggle);
+
+                const otherUsersContainer = document.createElement('div');
+                otherUsersContainer.id = 'other-users-container';
+                otherUsersContainer.style.display = isOtherUsersMinimized ? 'none' : 'block';
+                starredFootersContainer.appendChild(otherUsersContainer);
+
+                // Update other users' footers in the submenu
+                otherUsers.forEach(userIp => {
+                    updateUserFooter(userIp, userStarredImages[userIp].starred_images, false);
                 });
+            } else if (otherUsersCount === 1) {
+                // Display the single other user's footer without submenu
+                const singleOtherUserIp = otherUsers[0];
+                updateUserFooter(singleOtherUserIp, userStarredImages[singleOtherUserIp].starred_images, false);
             }
 
             updateFooterSpacerHeight();
@@ -2220,22 +2341,20 @@ foreach ($data as $ip => $userData) {
             starredListContainer.appendChild(starredList);
             footer.appendChild(starredListContainer);
 
-            if (isCurrentUser) {
-                const footerButtons = document.createElement('div');
-                footerButtons.className = 'footer-buttons';
-                footerButtons.innerHTML = `
-            <button class="footer-button download-all-button" title="Download All">
-                ${DOWNLOAD_SVG}
-            </button>
-            <button class="footer-button copy-names-button" title="Copy Names">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </button>
-        `;
-                footer.appendChild(footerButtons);
-            }
+            const footerButtons = document.createElement('div');
+            footerButtons.className = 'footer-buttons';
+            footerButtons.innerHTML = `
+        <button class="footer-button download-all-button" title="Download All">
+            ${DOWNLOAD_SVG}
+        </button>
+        <button class="footer-button copy-names-button" title="Copy Names">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        </button>
+    `;
+            footer.appendChild(footerButtons);
 
             return footer;
         }
@@ -2346,7 +2465,7 @@ foreach ($data as $ip => $userData) {
             if (currentFullImagePath) {
                 const imageName = currentFullImagePath.split('/').pop();
                 const imageContainer = document.querySelector(`.image-container[data-image="${imageName}"]`);
-                
+
                 if (imageContainer) {
                     // Update star status
                     const isStarred = imageContainer.classList.contains('starred');
@@ -2833,6 +2952,11 @@ foreach ($data as $ip => $userData) {
             updateFooterSpacerHeight();
 
             setTopUserNameColor();
+
+            const otherUsersToggle = document.getElementById('other-users-toggle');
+            if (otherUsersToggle) {
+                otherUsersToggle.addEventListener('click', toggleOtherUsers);
+            }
         });
     </script>
 </head>
@@ -2841,8 +2965,8 @@ foreach ($data as $ip => $userData) {
     <div id="top-bar">
         <a href="https://github.com/ktonini/reviewGrid" id="logo-container" title="View on GitHub">
             <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 157.24 157.67" width="40" height="40">
-                <path d="M157.24,5.63v11.81c0,3.04-2.46,5.5-5.5,5.49l-123.64-.13c-3.04,0-5.5,2.46-5.5,5.49v123.88c0,3.03-2.46,5.49-5.49,5.49H5.49c-3.03,0-5.49-2.46-5.49-5.49V5.49C0,2.46,2.46,0,5.5,0l146.26.13c3.03,0,5.49,2.46,5.49,5.49Z"/>
-                <path d="M50.58,45.31l101.18.13c3.03,0,5.49,2.46,5.49,5.49v11.81c0,3.04-2.47,5.5-5.5,5.49l-78.56-.13c-3.04,0-5.5,2.46-5.5,5.49l.1,56.63c0,3.03,2.45,5.49,5.48,5.49l56.57.12c3.04,0,5.51-2.45,5.51-5.49l-.04-11.6c0-3.03-2.46-5.49-5.49-5.49h-33.97c-3.03,0-5.55-2.48-5.55-5.51v-11.61c0-3.03,2.45-5.49,5.48-5.49h55.88c3.03,0,5.49,2.46,5.49,5.49l.1,56.03c0,3.03-2.46,5.49-5.49,5.49h-17.12s-83.97-.13-83.97-.13c-3.03,0-5.48-2.46-5.48-5.49l-.1-101.23c0-3.04,2.46-5.5,5.5-5.49Z"/>
+                <path d="M157.24,5.63v11.81c0,3.04-2.46,5.5-5.5,5.49l-123.64-.13c-3.04,0-5.5,2.46-5.5,5.49v123.88c0,3.03-2.46,5.49-5.49,5.49H5.49c-3.03,0-5.49-2.46-5.49-5.49V5.49C0,2.46,2.46,0,5.5,0l146.26.13c3.03,0,5.49,2.46,5.49,5.49Z" />
+                <path d="M50.58,45.31l101.18.13c3.03,0,5.49,2.46,5.49,5.49v11.81c0,3.04-2.47,5.5-5.5,5.49l-78.56-.13c-3.04,0-5.5,2.46-5.5,5.49l.1,56.63c0,3.03,2.45,5.49,5.48,5.49l56.57.12c3.04,0,5.51-2.45,5.51-5.49l-.04-11.6c0-3.03-2.46-5.49-5.49-5.49h-33.97c-3.03,0-5.55-2.48-5.55-5.51v-11.61c0-3.03,2.45-5.49,5.48-5.49h55.88c3.03,0,5.49,2.46,5.49,5.49l.1,56.03c0,3.03-2.46,5.49-5.49,5.49h-17.12s-83.97-.13-83.97-.13c-3.03,0-5.48-2.46-5.48-5.49l-.1-101.23c0-3.04,2.46-5.5,5.5-5.49Z" />
             </svg>
         </a>
         <h1>
@@ -2894,18 +3018,18 @@ foreach ($data as $ip => $userData) {
     <div id="starred-footers-container">
         <?php if (!empty($userStarredImages)): ?>
             <?php foreach ($userStarredImages as $ip => $userData): ?>
-                <div class="starred-footer <?php echo $ip !== $user_ip ? 'minimized' : ''; ?>" data-user-ip="<?php echo $ip; ?>">
-                    <button class="minimize-button" title="Minimize"><?php echo $ip !== $user_ip ? '▲' : '▼'; ?></button>
-                    <span class="user-name ellipsis" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
-                    <div class="starred-list-container">
-                        <div class="starred-list">
-                            <?php foreach ($userData['starred_images'] as $image):
-                                $thumbPath = $relativeThumbsUrl . '/' . preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '.webp', $image);
-                                $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $image;
-                            ?>
-                                <div class="starred-thumbnail" data-full-image="<?php echo $fullImagePath; ?>">
-                                    <img src="<?php echo $thumbPath; ?>" alt="<?php echo $image; ?>">
-                                    <?php if ($ip === $user_ip): ?>
+                <?php if ($ip === $user_ip): ?>
+                    <div class="starred-footer" data-user-ip="<?php echo $ip; ?>">
+                        <button class="minimize-button" title="Minimize">▼</button>
+                        <span class="user-name ellipsis" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
+                        <div class="starred-list-container">
+                            <div class="starred-list">
+                                <?php foreach ($userData['starred_images'] as $image):
+                                    $thumbPath = $relativeThumbsUrl . '/' . preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '.webp', $image);
+                                    $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $image;
+                                ?>
+                                    <div class="starred-thumbnail" data-full-image="<?php echo $fullImagePath; ?>">
+                                        <img src="<?php echo $thumbPath; ?>" alt="<?php echo $image; ?>">
                                         <div class="thumbnail-buttons">
                                             <button title="Unstar">★</button>
                                             <button title="Download">
@@ -2916,28 +3040,71 @@ foreach ($data as $ip => $userData) {
                                                 </svg>
                                             </button>
                                         </div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <div class="footer-buttons">
+                            <button class="footer-button download-all-button" title="Download All">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </button>
+                            <button class="footer-button copy-names-button" title="Copy Names">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                    <div class="footer-buttons">
-                        <button class="footer-button download-all-button" title="Download All">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                        </button>
-                        <button class="footer-button copy-names-button" title="Copy Names">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+                <?php endif; ?>
             <?php endforeach; ?>
+
+            <div id="other-users-toggle" class="minimized">
+                <button class="minimize-button" title="Toggle Other Users">▲</button>
+                <span>Other Users</span>
+            </div>
+
+            <div id="other-users-container" style="display: none;">
+                <?php foreach ($userStarredImages as $ip => $userData): ?>
+                    <?php if ($ip !== $user_ip): ?>
+                        <div class="starred-footer minimized" data-user-ip="<?php echo $ip; ?>">
+                            <button class="minimize-button" title="Minimize">▲</button>
+                            <span class="user-name ellipsis" data-user-ip="<?php echo $ip; ?>"><?php echo htmlspecialchars($userData['name']); ?></span>
+                            <div class="starred-list-container">
+                                <div class="starred-list">
+                                    <?php foreach ($userData['starred_images'] as $image):
+                                        $thumbPath = $relativeThumbsUrl . '/' . preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '.webp', $image);
+                                        $fullImagePath = ($subDir ? '/' . $subDir : '') . '/' . $image;
+                                    ?>
+                                        <div class="starred-thumbnail" data-full-image="<?php echo $fullImagePath; ?>">
+                                            <img src="<?php echo $thumbPath; ?>" alt="<?php echo $image; ?>">
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <div class="footer-buttons">
+                                <button class="footer-button download-all-button" title="Download All">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </button>
+                                <button class="footer-button copy-names-button" title="Copy Names">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
         <?php endif; ?>
     </div>
 
