@@ -656,7 +656,6 @@ foreach ($data as $ip => $userData) {
             font-size: 1.5rem;
             cursor: pointer;
             color: var(--button-color);
-            transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
         }
 
         .button {
