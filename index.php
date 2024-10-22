@@ -1693,8 +1693,7 @@ foreach ($data as $ip => $userData) {
                 otherUsersToggle.innerHTML = `
         <button class="minimize-button" title="Toggle Other Users">${isOtherUsersMinimized ? '▲' : '▼'}</button>
         <span>Other Users</span>
-        <span class="user-count-badge">${otherUsersCount}</span>
-    `;
+        <span class="user-count-badge">${otherUsersCount}</span>`;
                 otherUsersToggle.addEventListener('click', toggleOtherUsers);
                 starredFootersContainer.appendChild(otherUsersToggle);
 
@@ -2781,7 +2780,7 @@ foreach ($data as $ip => $userData) {
                     currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
                     const newImage = images[currentImageIndex];
                     currentFullImagePath = newImage.dataset.image;
-                } else {
+            } else {
                     const allImages = Array.from(document.querySelectorAll('.image-container'));
                     const currentIndex = allImages.findIndex(img => img.dataset.image === currentFullImagePath);
                     if (currentIndex !== -1) {
@@ -2816,7 +2815,7 @@ foreach ($data as $ip => $userData) {
                             body: `update_name=${encodeURIComponent(newName)}`
                 })
                 .then(response => response.json())
-                        .then(result => {
+                .then(result => {
                             if (result.success) {
                                 showToast('Name updated successfully!');
                                 updateAllUserNames(result.name);
@@ -2828,8 +2827,8 @@ foreach ($data as $ip => $userData) {
                             console.error('Error updating name:', error);
                             showToast(error.message);
                             updateAllUserNames(currentName);
-                        })
-                        .finally(() => {
+                })
+                .finally(() => {
                             nameSpan.classList.remove('editing');
                             input.remove();
                         });
@@ -2939,7 +2938,7 @@ foreach ($data as $ip => $userData) {
                 e.preventDefault();
                 if (e.deltaY > 0) {
                     navigateModal(1);
-                } else {
+            } else {
                     navigateModal(-1);
                 }
             });
@@ -3037,23 +3036,23 @@ foreach ($data as $ip => $userData) {
             });
 
             function updateFooterState(userIp, isMinimized) {
-                fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
+            fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
                         body: `update_footer_state=1&user_ip=${encodeURIComponent(userIp)}&minimized=${isMinimized}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
+                })
+                .then(response => response.json())
+                .then(data => {
                         if (!data.success) {
                             console.error('Failed to update footer state');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-            }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
             updateFooterSpacerHeight();
 
             setTopUserNameColor();
@@ -3089,7 +3088,7 @@ foreach ($data as $ip => $userData) {
         <?php
         if (empty($images)) {
             echo "<p>No images found in the directory.</p>";
-        } else {
+            } else {
             foreach ($images as $image) {
                 echo generateImageContainer($image, $subDir, $dataDir, $starredImages, $data, $user_ip, $baseUrl, $relativeThumbsUrl);
             }
