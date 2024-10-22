@@ -281,9 +281,21 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
     $isStarred = in_array($filename, $starredImages);
     $title = generateTitle($filename);
 
+    // Get image information
+    $imageSize = filesize($image);
+    $imageDimensions = getimagesize($image);
+    $imageFileType = $imageDimensions['mime'];
+    $imageInfo = [
+        'size' => $imageSize < 1024 * 1024 ? number_format($imageSize / 1024, 2) . " KB" :
+                  ($imageSize < 1024 * 1024 * 1024 ? number_format($imageSize / (1024 * 1024), 2) . " MB" :
+                  number_format($imageSize / (1024 * 1024 * 1024), 2) . " GB"),
+        'dimensions' => $imageDimensions[0] . " x " . $imageDimensions[1],
+        'type' => $imageFileType
+    ];
+
     ob_start();
 ?>
-    <div class="image-container <?php echo $isStarred ? 'starred' : ''; ?>" data-image="<?php echo $filename; ?>">
+    <div class="image-container <?php echo $isStarred ? 'starred' : ''; ?>" data-image="<?php echo $filename; ?>" data-image-info='<?php echo htmlspecialchars(json_encode($imageInfo), ENT_QUOTES, 'UTF-8'); ?>'>
         <div class="image-wrapper">
             <img src="<?php echo $thumbPath; ?>" alt="<?php echo $title; ?>" data-full-image="<?php echo $fullImagePath; ?>">
             <button class="button star-button" title="Star" aria-label="Star image">★</button>
@@ -293,6 +305,9 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg></a>
+            </div>
+            <div class="image-info-overlay">
+                <span><?php echo $imageInfo['size']; ?></span><span><?php echo $imageInfo['dimensions']; ?></span><span><?php echo strtoupper(str_replace('image/', '', $imageInfo['type'])); ?></span>
             </div>
         </div>
         <div class="image-info">
@@ -1480,6 +1495,34 @@ foreach ($data as $ip => $userData) {
             .starred-footer[data-user-ip="<?php echo $user_ip; ?>"] .starred-thumbnail:hover .thumbnail-buttons {
                 opacity: 0;
             }
+        }
+
+        .image-info-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0));
+            color: white;
+            display: flex;
+            padding-right: 1rem;
+            padding-left: 1rem;
+            justify-content: space-between;
+            align-items: end;
+            gap: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .image-wrapper:hover .image-info-overlay {
+            opacity: 1;
+        }
+
+        .image-info-overlay p {
+            margin: 5px 0;
+            font-size: 14px;
         }
     </style>
     <script>
@@ -2693,35 +2736,35 @@ foreach ($data as $ip => $userData) {
 
             function editModalComment() {
                 const commentContainer = modal.querySelector('.comment-container');
-            const currentUserComment = commentContainer.querySelector('.comment-box.current-user');
-            const commentPlaceholder = commentContainer.querySelector('.comment-placeholder');
-            let currentComment = '';
+                const currentUserComment = commentContainer.querySelector('.comment-box.current-user');
+                const commentPlaceholder = commentContainer.querySelector('.comment-placeholder');
+                let currentComment = '';
 
-            if (currentUserComment) {
-                const commentSpan = currentUserComment.querySelector('.comment');
-                if (commentSpan) {
-                    currentComment = commentSpan.textContent.trim();
+                if (currentUserComment) {
+                    const commentSpan = currentUserComment.querySelector('.comment');
+                    if (commentSpan) {
+                        currentComment = commentSpan.textContent.trim();
+                    }
                 }
-            }
 
-            if (commentContainer.querySelector('textarea')) return;
+                if (commentContainer.querySelector('textarea')) return;
 
-            const input = document.createElement('textarea');
-            input.value = currentComment;
-            input.style.width = '100%';
-            input.style.boxSizing = 'border-box';
-            input.style.minHeight = '3em';
+                const input = document.createElement('textarea');
+                input.value = currentComment;
+                input.style.width = '100%';
+                input.style.boxSizing = 'border-box';
+                input.style.minHeight = '3em';
 
-            input.style.height = 'auto';
-            input.style.height = input.scrollHeight + 'px';
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
 
-            let isSaving = false;
+                let isSaving = false;
 
                 function saveModalComment() {
-                if (isSaving) return;
-                isSaving = true;
+                    if (isSaving) return;
+                    isSaving = true;
 
-                const newComment = input.value.trim();
+                    const newComment = input.value.trim();
 
                     updateCommentUIForContainer(modal, currentUserIp, newComment, true);
 
@@ -2734,34 +2777,34 @@ foreach ($data as $ip => $userData) {
                 }
 
                 input.addEventListener('blur', saveModalComment);
-            input.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = this.scrollHeight + 'px';
-            });
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    input.blur();
-                }
-            });
+                input.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        input.blur();
+                    }
+                });
 
-            if (currentUserComment) {
-                currentUserComment.innerHTML = '';
-                currentUserComment.appendChild(input);
-            } else {
-                if (commentPlaceholder) {
-                    commentPlaceholder.style.display = 'none';
+                if (currentUserComment) {
+                    currentUserComment.innerHTML = '';
+                    currentUserComment.appendChild(input);
+                } else {
+                    if (commentPlaceholder) {
+                        commentPlaceholder.style.display = 'none';
+                    }
+                    const newCommentBox = document.createElement('div');
+                    newCommentBox.className = 'comment-box current-user temp-edit';
+                    newCommentBox.appendChild(input);
+                    commentContainer.appendChild(newCommentBox);
                 }
-                const newCommentBox = document.createElement('div');
-                newCommentBox.className = 'comment-box current-user temp-edit';
-                newCommentBox.appendChild(input);
-                commentContainer.appendChild(newCommentBox);
+                input.focus();
+
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
             }
-            input.focus();
-
-            input.style.height = 'auto';
-            input.style.height = input.scrollHeight + 'px';
-        }
 
             function initializeStarredImages() {
                 document.querySelectorAll('.image-container').forEach(container => {
@@ -2780,7 +2823,7 @@ foreach ($data as $ip => $userData) {
                     currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
                     const newImage = images[currentImageIndex];
                     currentFullImagePath = newImage.dataset.image;
-            } else {
+                } else {
                     const allImages = Array.from(document.querySelectorAll('.image-container'));
                     const currentIndex = allImages.findIndex(img => img.dataset.image === currentFullImagePath);
                     if (currentIndex !== -1) {
@@ -2807,28 +2850,28 @@ foreach ($data as $ip => $userData) {
                     const newName = input.value.trim();
                     updateAllUserNames(newName);
 
-            fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
                             body: `update_name=${encodeURIComponent(newName)}`
-                })
-                .then(response => response.json())
-                .then(result => {
+                        })
+                        .then(response => response.json())
+                        .then(result => {
                             if (result.success) {
                                 showToast('Name updated successfully!');
                                 updateAllUserNames(result.name);
                             } else {
                                 throw new Error(result.error || 'Failed to update name.');
-                    }
-                })
-                .catch(error => {
+                            }
+                        })
+                        .catch(error => {
                             console.error('Error updating name:', error);
                             showToast(error.message);
                             updateAllUserNames(currentName);
-                })
-                .finally(() => {
+                        })
+                        .finally(() => {
                             nameSpan.classList.remove('editing');
                             input.remove();
                         });
@@ -2938,7 +2981,7 @@ foreach ($data as $ip => $userData) {
                 e.preventDefault();
                 if (e.deltaY > 0) {
                     navigateModal(1);
-            } else {
+                } else {
                     navigateModal(-1);
                 }
             });
@@ -3036,23 +3079,23 @@ foreach ($data as $ip => $userData) {
             });
 
             function updateFooterState(userIp, isMinimized) {
-            fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
                         body: `update_footer_state=1&user_ip=${encodeURIComponent(userIp)}&minimized=${isMinimized}`
-                })
-                .then(response => response.json())
-                .then(data => {
+                    })
+                    .then(response => response.json())
+                    .then(data => {
                         if (!data.success) {
                             console.error('Failed to update footer state');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
             updateFooterSpacerHeight();
 
             setTopUserNameColor();
@@ -3088,7 +3131,7 @@ foreach ($data as $ip => $userData) {
         <?php
         if (empty($images)) {
             echo "<p>No images found in the directory.</p>";
-            } else {
+        } else {
             foreach ($images as $image) {
                 echo generateImageContainer($image, $subDir, $dataDir, $starredImages, $data, $user_ip, $baseUrl, $relativeThumbsUrl);
             }
@@ -3149,19 +3192,19 @@ foreach ($data as $ip => $userData) {
                             </div>
                         </div>
                         <div class="footer-buttons">
-        <button class="footer-button download-all-button" title="Download All">
+                            <button class="footer-button download-all-button" title="Download All">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
-        </button>
-        <button class="footer-button copy-names-button" title="Copy Names">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-        </button>
+                            </button>
+                            <button class="footer-button copy-names-button" title="Copy Names">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 <?php endif; ?>
