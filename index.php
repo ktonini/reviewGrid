@@ -2415,6 +2415,7 @@ foreach ($data as $ip => $userData) {
             const footerSpacerElement = document.getElementById('footer-spacer');
             const starredFootersContainer = document.getElementById('starred-footers-container');
             const footers = Array.from(starredFootersContainer.querySelectorAll('.starred-footer'));
+            const otherUsersToggle = document.getElementById('other-users-toggle');
 
             const isScrolledToBottom = window.innerHeight + window.pageYOffset >= document.body.offsetHeight - 1;
 
@@ -2422,6 +2423,11 @@ foreach ($data as $ip => $userData) {
             footers.forEach(footer => {
                 totalHeight += footer.offsetHeight;
             });
+
+            // Add height of other users toggle and container if they exist
+            if (otherUsersToggle) {
+                totalHeight += otherUsersToggle.offsetHeight;
+            }
 
             footerSpacerElement.style.height = `${totalHeight}px`;
 
@@ -2688,35 +2694,35 @@ foreach ($data as $ip => $userData) {
 
             function editModalComment() {
                 const commentContainer = modal.querySelector('.comment-container');
-                const currentUserComment = commentContainer.querySelector('.comment-box.current-user');
-                const commentPlaceholder = commentContainer.querySelector('.comment-placeholder');
-                let currentComment = '';
+            const currentUserComment = commentContainer.querySelector('.comment-box.current-user');
+            const commentPlaceholder = commentContainer.querySelector('.comment-placeholder');
+            let currentComment = '';
 
-                if (currentUserComment) {
-                    const commentSpan = currentUserComment.querySelector('.comment');
-                    if (commentSpan) {
-                        currentComment = commentSpan.textContent.trim();
-                    }
+            if (currentUserComment) {
+                const commentSpan = currentUserComment.querySelector('.comment');
+                if (commentSpan) {
+                    currentComment = commentSpan.textContent.trim();
                 }
+            }
 
-                if (commentContainer.querySelector('textarea')) return;
+            if (commentContainer.querySelector('textarea')) return;
 
-                const input = document.createElement('textarea');
-                input.value = currentComment;
-                input.style.width = '100%';
-                input.style.boxSizing = 'border-box';
-                input.style.minHeight = '3em';
+            const input = document.createElement('textarea');
+            input.value = currentComment;
+            input.style.width = '100%';
+            input.style.boxSizing = 'border-box';
+            input.style.minHeight = '3em';
 
-                input.style.height = 'auto';
-                input.style.height = input.scrollHeight + 'px';
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
 
-                let isSaving = false;
+            let isSaving = false;
 
                 function saveModalComment() {
-                    if (isSaving) return;
-                    isSaving = true;
+                if (isSaving) return;
+                isSaving = true;
 
-                    const newComment = input.value.trim();
+                const newComment = input.value.trim();
 
                     updateCommentUIForContainer(modal, currentUserIp, newComment, true);
 
@@ -2729,34 +2735,34 @@ foreach ($data as $ip => $userData) {
                 }
 
                 input.addEventListener('blur', saveModalComment);
-                input.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = this.scrollHeight + 'px';
-                });
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        input.blur();
-                    }
-                });
-
-                if (currentUserComment) {
-                    currentUserComment.innerHTML = '';
-                    currentUserComment.appendChild(input);
-                } else {
-                    if (commentPlaceholder) {
-                        commentPlaceholder.style.display = 'none';
-                    }
-                    const newCommentBox = document.createElement('div');
-                    newCommentBox.className = 'comment-box current-user temp-edit';
-                    newCommentBox.appendChild(input);
-                    commentContainer.appendChild(newCommentBox);
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    input.blur();
                 }
-                input.focus();
+            });
 
-                input.style.height = 'auto';
-                input.style.height = input.scrollHeight + 'px';
+            if (currentUserComment) {
+                currentUserComment.innerHTML = '';
+                currentUserComment.appendChild(input);
+            } else {
+                if (commentPlaceholder) {
+                    commentPlaceholder.style.display = 'none';
+                }
+                const newCommentBox = document.createElement('div');
+                newCommentBox.className = 'comment-box current-user temp-edit';
+                newCommentBox.appendChild(input);
+                commentContainer.appendChild(newCommentBox);
             }
+            input.focus();
+
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
+        }
 
             function initializeStarredImages() {
                 document.querySelectorAll('.image-container').forEach(container => {
@@ -2802,23 +2808,23 @@ foreach ($data as $ip => $userData) {
                     const newName = input.value.trim();
                     updateAllUserNames(newName);
 
-                    fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
+            fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
                             body: `update_name=${encodeURIComponent(newName)}`
-                        })
-                        .then(response => response.json())
+                })
+                .then(response => response.json())
                         .then(result => {
                             if (result.success) {
                                 showToast('Name updated successfully!');
                                 updateAllUserNames(result.name);
                             } else {
                                 throw new Error(result.error || 'Failed to update name.');
-                            }
-                        })
-                        .catch(error => {
+                    }
+                })
+                .catch(error => {
                             console.error('Error updating name:', error);
                             showToast(error.message);
                             updateAllUserNames(currentName);
@@ -3144,19 +3150,19 @@ foreach ($data as $ip => $userData) {
                             </div>
                         </div>
                         <div class="footer-buttons">
-                            <button class="footer-button download-all-button" title="Download All">
+        <button class="footer-button download-all-button" title="Download All">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
-                            </button>
-                            <button class="footer-button copy-names-button" title="Copy Names">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
+        </button>
+        <button class="footer-button copy-names-button" title="Copy Names">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        </button>
                         </div>
                     </div>
                 <?php endif; ?>
