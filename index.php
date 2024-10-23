@@ -556,7 +556,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             color: white;
             opacity: 0;
             transition: opacity 0.3s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
-            z-index: 2;
         }
 
         .modal-content .star-button {
