@@ -68,7 +68,8 @@ if (!isset($data[$user_ip])) {
     $data[$user_ip] = [
         'name' => $user_ip,
         'starred_images' => [],
-        'footer_minimized' => false  // Add this line
+        'footer_minimized' => false,
+        'theme' => 'dark'  // Add this line
     ];
     file_put_contents($usersFile, json_encode($data));
 }
@@ -86,6 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         handleAddComment();
     } elseif (isset($_POST['update_footer_state'])) {  // Add this condition
         handleFooterStateUpdate();
+    } elseif (isset($_POST['update_theme'])) {
+        handleThemeUpdate();
     }
     exit;
 }
@@ -98,6 +101,16 @@ function handleFooterStateUpdate()
     $data[$user_ip]['footer_minimized'] = $minimized;
     file_put_contents($usersFile, json_encode($data));
     echo json_encode(['success' => true]);
+}
+
+// Add a new function to handle theme updates
+function handleThemeUpdate()
+{
+    global $data, $user_ip, $usersFile;
+    $theme = $_POST['theme'];
+    $data[$user_ip]['theme'] = $theme;
+    file_put_contents($usersFile, json_encode($data));
+    echo json_encode(['success' => true, 'theme' => $theme]);
 }
 
 // Handle GET requests for updates
@@ -293,9 +306,8 @@ function generateImageContainer($image, $subDir, $dataDir, $starredImages, $data
     $imageDimensions = getimagesize($image);
     $imageFileType = $imageDimensions['mime'];
     $imageInfo = [
-        'size' => $imageSize < 1024 * 1024 ? number_format($imageSize / 1024, 2) . " KB" :
-                  ($imageSize < 1024 * 1024 * 1024 ? number_format($imageSize / (1024 * 1024), 2) . " MB" :
-                  number_format($imageSize / (1024 * 1024 * 1024), 2) . " GB"),
+        'size' => $imageSize < 1024 * 1024 ? number_format($imageSize / 1024, 2) . " KB" : ($imageSize < 1024 * 1024 * 1024 ? number_format($imageSize / (1024 * 1024), 2) . " MB" :
+            number_format($imageSize / (1024 * 1024 * 1024), 2) . " GB"),
         'dimensions' => $imageDimensions[0] . " x " . $imageDimensions[1],
         'type' => $imageFileType
     ];
@@ -394,13 +406,14 @@ foreach ($data as $ip => $userData) {
 $validImages = array_map('basename', $images);
 
 foreach ($userStarredImages as $ip => $userData) {
-    $userStarredImages[$ip]['starred_images'] = array_filter($userData['starred_images'], function($image) use ($validImages) {
+    $userStarredImages[$ip]['starred_images'] = array_filter($userData['starred_images'], function ($image) use ($validImages) {
         return in_array($image, $validImages);
     });
 }
 
 // Modify the generateStarredFooter function
-function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl, $validImages) {
+function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl, $validImages)
+{
     $footer = '<div class="starred-footer">';
     $footer .= '<div class="starred-list">';
     foreach ($userStarredImages as $ip => $userData) {
@@ -446,6 +459,11 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             --scrollbar-thumb: rgba(255, 255, 255, 0.3);
             --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
             --footer-shadow: 0 -1.25rem 6.25rem rgba(0, 0, 0, 0.4);
+            --footer-bg: rgba(44, 44, 44, 0.8);
+            --footer-text: #e0e0e0;
+            --footer-button: #fff;
+            --footer-button-hover: #ffa768;
+            --footer-border: rgba(255, 255, 255, 0.1);
         }
 
         body {
@@ -800,7 +818,8 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             max-height: 50vh;
             overflow-y: hidden;
             box-shadow: var(--footer-shadow);
-            background-color: rgba(44, 44, 44, 0.8);
+            background-color: var(--footer-bg);
+            color: var(--footer-text);
             backdrop-filter: blur(1.25rem);
             -webkit-backdrop-filter: blur(1.25rem);
         }
@@ -812,7 +831,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             align-items: center;
             padding: 0.5rem;
             padding-bottom: 0;
-            color: #fff;
             gap: 0.5rem;
         }
 
@@ -820,7 +838,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             grid-area: minimize;
             background: none;
             border: none;
-            color: var(--button-color);
+            color: var(--footer-button);
             cursor: pointer;
             font-size: 0.8rem;
             padding: 0.3125rem;
@@ -1002,7 +1020,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
         .footer-button {
             background: none;
             border: none;
-            color: var(--button-color);
+            color: var(--footer-button);
             cursor: pointer;
             transition: color 0.2s ease, transform 0.2s ease;
             padding: 0;
@@ -1078,7 +1096,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             padding: 0.375rem 0.5rem;
             background-color: #1f1f1f;
             border-radius: 0.375rem;
-            box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2);
             align-items: baseline;
         }
 
@@ -1562,6 +1579,103 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             margin: 5px 0;
             font-size: 14px;
         }
+
+        /* Theme toggle button styles */
+        #theme-toggle-container {
+            position: absolute;
+            right: 7rem;
+            /* Adjust as needed */
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        #theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        #theme-toggle:hover {
+            color: var(--star-color);
+        }
+
+        /* Light mode styles */
+        body.light-mode {
+            --bg-color: #bbbbbb;
+            --text-color: #333;
+            --card-bg: #eaeaea;
+            --starred-bg: #fff;
+            --button-color: #333;
+            --star-color: #ff9900;
+            --copy-button-bg: #007bff;
+            --copy-button-hover: #0056b3;
+            --scrollbar-bg: rgba(0, 0, 0, 0.1);
+            --scrollbar-thumb: rgba(0, 0, 0, 0.3);
+            --scrollbar-thumb-hover: rgba(0, 0, 0, 0.5);
+            --footer-shadow: 0 -1.25rem 6.25rem rgba(0, 0, 0, 0.1);
+
+            /* New light mode variables */
+            --top-bar-bg: rgba(187, 187, 187, 0.8);
+            --footer-bg: rgba(187, 187, 187, 0.8);
+            --footer-text: #333;
+            --footer-button: #555;
+            --footer-button-hover: #777;
+            --footer-border: rgba(0, 0, 0, 0.1);
+            --modal-bg: #f5f5f5;
+            --modal-header-bg: #e0e0e0;
+            --input-bg: #fff;
+            --input-border: #ccc;
+        }
+
+        /* Apply light mode styles */
+        body.light-mode #top-bar,
+        body.light-mode #footer {
+            background-color: var(--top-bar-bg);
+        }
+
+        body.light-mode .modal-content {
+            background-color: var(--modal-bg);
+        }
+
+        body.light-mode .modal-header {
+            background-color: var(--modal-header-bg);
+        }
+
+        body.light-mode input[type="text"],
+        body.light-mode textarea {
+            background-color: var(--input-bg);
+            border-color: var(--input-border);
+            color: var(--text-color);
+        }
+
+        body.light-mode .comment-box {
+            background-color: #bbbbbb;
+        }
+
+        body.light-mode #footer-content {
+            background-color: var(--footer-bg);
+        }
+
+        /* Adjust other elements as needed */
+        body.light-mode .button {
+            background-color: var(--button-color);
+            color: var(--bg-color);
+        }
+
+        body.light-mode .button:hover {
+            background-color: #555;
+        }
+
+        body.light-mode #theme-toggle {
+            color: var(--text-color);
+        }
+
+        body.light-mode #theme-toggle:hover {
+            color: var(--star-color);
+        }
     </style>
     <script>
         let initialStarredImages = <?php echo json_encode($data[$user_ip]['starred_images']); ?>;
@@ -1982,9 +2096,16 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
                 h /= 6;
             }
 
-            // Adjust for pastel
-            s = Math.min(s * 100, 60); // Reduce saturation
-            l = Math.max(l * 100, 70); // Increase lightness
+            const isLightMode = document.body.classList.contains('light-mode');
+            if (isLightMode) {
+                // For light mode, reduce lightness to make colors darker
+                l = Math.min(l * 100, 30); // Cap lightness at 50%
+            } else {
+                // For dark mode, keep the existing logic
+                l = Math.max(l * 100, 70); // Increase lightness
+            }
+
+            s = Math.min(s * 100, 60); // Reduce saturation (keep this the same for both modes)
 
             // Convert back to RGB
             const c = (1 - Math.abs(2 * l / 100 - 1)) * s / 100;
@@ -2020,6 +2141,24 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
                 const userColor = generateColorFromIP(userIp);
                 topUserName.style.color = userColor;
             }
+        }
+
+        // Add this to your theme toggle function
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            // ... other theme toggle logic ...
+            setTopUserNameColor(); // Re-apply the color after theme change
+            updateAllUserColors(); // Update colors for all user names
+        }
+
+        // Add this new function to update all user name colors
+        function updateAllUserColors() {
+            const userNames = document.querySelectorAll('.comment-user');
+            userNames.forEach(userName => {
+                const userIp = userName.dataset.userIp;
+                const userColor = generateColorFromIP(userIp);
+                userName.style.color = userColor;
+            });
         }
 
         function createCommentPlaceholder(container, isModal) {
@@ -2457,7 +2596,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             if (!validImages.includes(imageName)) {
                 return null;
             }
-            
+
             const thumbnail = document.createElement('div');
             thumbnail.className = 'starred-thumbnail';
             thumbnail.dataset.fullImage = `${baseUrl}${subDir ? '/' + subDir : ''}/${imageName}`;
@@ -3168,6 +3307,91 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             if (otherUsersToggle) {
                 otherUsersToggle.addEventListener('click', toggleOtherUsers);
             }
+
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+            const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+
+            // Set initial theme
+            const initialTheme = '<?php echo $data[$user_ip]['theme']; ?>';
+            setTheme(initialTheme);
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = body.classList.contains('light-mode') ? 'dark' : 'light';
+                setTheme(newTheme);
+                saveThemePreference(newTheme);
+            });
+
+            function setTheme(theme) {
+                if (theme === 'light') {
+                    body.classList.add('light-mode');
+                    themeToggle.innerHTML = moonIcon;
+                } else {
+                    body.classList.remove('light-mode');
+                    themeToggle.innerHTML = sunIcon;
+                }
+
+                // Update footer styles
+                const footer = document.getElementById('starred-footers-container');
+                if (footer) {
+                    footer.style.backgroundColor = getComputedStyle(body).getPropertyValue('--footer-bg');
+                    footer.style.color = getComputedStyle(body).getPropertyValue('--footer-text');
+                }
+
+                // Update other users toggle and container
+                const otherUsersToggle = document.getElementById('other-users-toggle');
+                const otherUsersContainer = document.getElementById('other-users-container');
+                if (otherUsersToggle) {
+                    otherUsersToggle.style.backgroundColor = getComputedStyle(body).getPropertyValue('--footer-bg');
+                    otherUsersToggle.style.borderTopColor = getComputedStyle(body).getPropertyValue('--footer-border');
+                }
+                if (otherUsersContainer) {
+                    otherUsersContainer.style.backgroundColor = getComputedStyle(body).getPropertyValue('--footer-bg');
+                }
+
+                // Update minimize buttons and footer buttons
+                const buttons = document.querySelectorAll('.minimize-button, .footer-button');
+                buttons.forEach(button => {
+                    button.style.color = getComputedStyle(body).getPropertyValue('--footer-button');
+                });
+
+                updateUserNameColors();
+            }
+
+            function saveThemePreference(theme) {
+                fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `update_theme=1&theme=${theme}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Theme preference saved');
+                        } else {
+                            console.error('Failed to save theme preference');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            function updateUserNameColors() {
+                document.querySelectorAll('.comment-user, #top-user-name').forEach(el => {
+                    const userIp = el.dataset.userIp;
+                    if (userIp) {
+                        const userColor = generateColorFromIP(userIp);
+                        el.style.color = userColor;
+                    }
+                });
+            }
+
+            setTheme(initialTheme);
         });
     </script>
 </head>
@@ -3189,6 +3413,13 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
                 <path class="st0" d="M11,4H4C2.9,4,2,4.9,2,6v14c0,1.1,0.9,2,2,2h14c1.1,0,2-0.9,2-2v-7" />
                 <path class="st0" d="M18.5,2.5c0.83-0.83,2.17-0.83,3,0s0.83,2.17,0,3L12,15l-4,1l1-4L18.5,2.5z" />
             </svg>
+        </div>
+        <div id="theme-toggle-container">
+            <button id="theme-toggle" aria-label="Toggle theme">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </div>
     </div>
     <div class="gallery">
