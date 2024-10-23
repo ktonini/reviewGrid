@@ -1846,69 +1846,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             updateFooterSpacerHeight();
         }
 
-        // Modify the updateStarredFooters function
-        function updateStarredFooters() {
-            let starredFootersContainer = document.getElementById('starred-footers-container');
-            if (!starredFootersContainer) {
-                starredFootersContainer = document.createElement('div');
-                starredFootersContainer.id = 'starred-footers-container';
-                document.body.appendChild(starredFootersContainer);
-            }
-
-            // Save current states before updating
-            document.querySelectorAll('.starred-footer').forEach(footer => {
-                const userIp = footer.dataset.userIp;
-                footerMinimizedStates[userIp] = footer.classList.contains('minimized');
-            });
-
-            // Update current user's footer
-            const currentUserValidImages = initialStarredImages.filter(image => validImages.includes(image));
-            updateUserFooter(currentUserIp, currentUserValidImages, true);
-
-            // Count other users with valid images
-            const otherUsers = Object.keys(userStarredImages).filter(ip => {
-                return ip !== currentUserIp && userStarredImages[ip].starred_images.some(image => validImages.includes(image));
-            });
-            const otherUsersCount = otherUsers.length;
-
-            // Remove existing other users container and toggle if they exist
-            const existingOtherUsersContainer = document.getElementById('other-users-container');
-            const existingOtherUsersToggle = document.getElementById('other-users-toggle');
-            if (existingOtherUsersContainer) existingOtherUsersContainer.remove();
-            if (existingOtherUsersToggle) existingOtherUsersToggle.remove();
-
-            if (otherUsersCount >= 2) {
-                // Create submenu for multiple other users
-                const otherUsersToggle = document.createElement('div');
-                otherUsersToggle.id = 'other-users-toggle';
-                otherUsersToggle.className = isOtherUsersMinimized ? 'minimized' : '';
-                otherUsersToggle.innerHTML = `
-        <button class="minimize-button" title="Toggle Other Users">${isOtherUsersMinimized ? '▲' : '▼'}</button>
-        <span>Other Users</span>
-        <span class="user-count-badge">${otherUsersCount}</span>`;
-                otherUsersToggle.addEventListener('click', toggleOtherUsers);
-                starredFootersContainer.appendChild(otherUsersToggle);
-
-                const otherUsersContainer = document.createElement('div');
-                otherUsersContainer.id = 'other-users-container';
-                otherUsersContainer.style.display = isOtherUsersMinimized ? 'none' : 'block';
-                starredFootersContainer.appendChild(otherUsersContainer);
-
-                // Update other users' footers in the submenu
-                otherUsers.forEach(userIp => {
-                    const validStarredImages = userStarredImages[userIp].starred_images.filter(image => validImages.includes(image));
-                    updateUserFooter(userIp, validStarredImages, false);
-                });
-            } else if (otherUsersCount === 1) {
-                // Display the single other user's footer without submenu
-                const singleOtherUserIp = otherUsers[0];
-                const validStarredImages = userStarredImages[singleOtherUserIp].starred_images.filter(image => validImages.includes(image));
-                updateUserFooter(singleOtherUserIp, validStarredImages, false);
-            }
-
-            updateFooterSpacerHeight();
-        }
-
         // Modify the updateUserFooter function
         function updateUserFooter(userIp, starredImages, isCurrentUser) {
             const container = isCurrentUser ?
@@ -2471,6 +2408,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
         let validImages = <?php echo json_encode($validImages); ?>;
 
         function updateStarredFooters() {
+            console.debug("updateStarredFooters called. Current userStarredImages:", JSON.parse(JSON.stringify(userStarredImages)));
             let starredFootersContainer = document.getElementById('starred-footers-container');
             if (!starredFootersContainer) {
                 starredFootersContainer = document.createElement('div');
@@ -2490,9 +2428,17 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
 
             // Count other users with valid images
             const otherUsers = Object.keys(userStarredImages).filter(ip => {
-                return ip !== currentUserIp && userStarredImages[ip].starred_images.some(image => validImages.includes(image));
+                if (ip === currentUserIp) return false;
+                const userImages = userStarredImages[ip].starred_images;
+                const validUserImages = Array.isArray(userImages) 
+                    ? userImages.filter(image => validImages.includes(image))
+                    : Object.values(userImages).filter(image => validImages.includes(image));
+                console.debug(`User ${ip}: validUserImages=${JSON.stringify(validUserImages)}`);
+                return validUserImages.length > 0;
             });
+            console.debug("Filtered otherUsers:", otherUsers);
             const otherUsersCount = otherUsers.length;
+            console.debug("otherUsersCount:", otherUsersCount);
 
             // Remove existing other users container and toggle if they exist
             const existingOtherUsersContainer = document.getElementById('other-users-container');
@@ -2500,7 +2446,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             if (existingOtherUsersContainer) existingOtherUsersContainer.remove();
             if (existingOtherUsersToggle) existingOtherUsersToggle.remove();
 
-            if (otherUsersCount >= 2) {
+            if (otherUsersCount > 0) {
                 // Create submenu for multiple other users
                 const otherUsersToggle = document.createElement('div');
                 otherUsersToggle.id = 'other-users-toggle';
@@ -2520,14 +2466,12 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
 
                 // Update other users' footers in the submenu
                 otherUsers.forEach(userIp => {
-                    const validStarredImages = userStarredImages[userIp].starred_images.filter(image => validImages.includes(image));
+                    const userImages = userStarredImages[userIp].starred_images;
+                    const validStarredImages = Array.isArray(userImages)
+                        ? userImages.filter(image => validImages.includes(image))
+                        : Object.values(userImages).filter(image => validImages.includes(image));
                     updateUserFooter(userIp, validStarredImages, false);
                 });
-            } else if (otherUsersCount === 1) {
-                // Display the single other user's footer without submenu
-                const singleOtherUserIp = otherUsers[0];
-                const validStarredImages = userStarredImages[singleOtherUserIp].starred_images.filter(image => validImages.includes(image));
-                updateUserFooter(singleOtherUserIp, validStarredImages, false);
             }
 
             updateFooterSpacerHeight();
@@ -2673,6 +2617,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
         }
 
         function updateUI(data) {
+            console.debug("updateUI called with data:", JSON.parse(JSON.stringify(data)));
             const allComments = {};
             Object.keys(data).forEach(userIp => {
                 if (data[userIp].comments) {
@@ -2703,6 +2648,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
                         initialStarredImages.push(...data[userIp].starred_images);
                         updateStarredFooters();
                     } else {
+                        console.debug(`Updating starred images for user ${userIp}:`, data[userIp].starred_images);
                         updateOtherUserStarredImages(userIp, data[userIp].starred_images);
                     }
                 }
@@ -2747,9 +2693,12 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
         }
 
         function updateOtherUserStarredImages(userIp, starredImages) {
-            console.debug("Updating starred images for user:", userIp);
+            console.debug("Updating starred images for user:", userIp, "Images:", starredImages);
             const userFooter = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
             const wasMinimized = footerMinimizedStates[userIp] !== undefined ? footerMinimizedStates[userIp] : true;
+
+            // Ensure starredImages is an array
+            starredImages = Array.isArray(starredImages) ? starredImages : [];
 
             if (userFooter) {
                 const starredList = userFooter.querySelector('.starred-list');
@@ -2771,6 +2720,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
                 userStarredImages[userIp] = {};
             }
             userStarredImages[userIp].starred_images = starredImages;
+            console.debug("Updated userStarredImages:", JSON.parse(JSON.stringify(userStarredImages)));
 
             // Preserve the minimized state
             const updatedFooter = document.querySelector(`.starred-footer[data-user-ip="${userIp}"]`);
