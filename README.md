@@ -45,8 +45,9 @@ This screenshot showcases the main interface of ReviewGrid, displaying the image
   - Full-size images loaded only when viewed in modal
 - **Accessibility features**: Aria labels and titles for better screen reader support
 - **Basic security measures**: User input escaping implemented
-- **Custom styling**: 
-  - Dark theme with customizable CSS variables
+- **Light/Dark theme**: 
+  - Toggle between light and dark themes
+  - User preference is saved and persists across sessions
 - **Easy cleanup**: Remove the PHP file and `_data` folder to revert to the original image directory
 
 ReviewGrid is perfect for quickly sharing and reviewing sets of images, whether for personal use, client presentations, or collaborative projects. Its self-contained nature means you can easily move, copy, or delete the gallery without complex setup or teardown procedures.
