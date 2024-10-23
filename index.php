@@ -522,10 +522,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             transition: transform 0.2s ease;
         }
 
-        .image-container.starred:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
-        }
-
         .image-wrapper {
             position: relative;
             overflow: hidden;
@@ -1208,18 +1204,20 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
 
         #user-name-container {
             position: absolute;
-            right: 0.5rem;
+            right: 2rem;
             top: 50%;
             transform: translateY(-50%);
+            display: flex;
             align-items: center;
+            justify-content: flex-end;
             color: #fff;
             cursor: pointer;
             margin-right: 0.5rem;
         }
 
         .edit-icon {
-            width: 1rem;
-            height: 1rem;
+            width: 1.5rem;
+            height: 1.5rem;
             margin-left: 0.3125rem;
             cursor: pointer;
             vertical-align: middle;
@@ -1238,6 +1236,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             transition: background-color 0.2s ease;
             font-size: 0.9rem;
             margin-right: 0.3125rem;
+            text-align: right;
         }
 
         #user-name-container:hover {
@@ -1583,19 +1582,18 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
         /* Theme toggle button styles */
         #theme-toggle-container {
             position: absolute;
-            right: 7rem;
-            /* Adjust as needed */
-            top: 50%;
-            transform: translateY(-50%);
+            right: 0;
         }
-
         #theme-toggle {
             background: none;
             border: none;
             color: var(--text-color);
             cursor: pointer;
-            padding: 0.5rem;
             transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
         }
 
         #theme-toggle:hover {
@@ -3371,7 +3369,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            console.log('Theme preference saved');
+                            console.debug('Theme preference saved');
                         } else {
                             console.error('Failed to save theme preference');
                         }
