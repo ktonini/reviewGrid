@@ -1259,7 +1259,27 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             border-color: #777;
         }
 
-        /* Add some padding to the body to account for the fixed top bar */
+        @media screen and (max-width: 675px) {
+
+            #top-bar {
+                justify-content: flex-start;
+                /* Align title to the left */
+                padding-left: 3.5rem;
+                /* Make space for the logo */
+            }
+
+            #page-title {
+                font-size: 1.2rem;
+                /* Reduce font size for smaller screens */
+                max-width: calc(100% - 7rem);
+                /* Limit width to prevent overlap */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-left: 0.5rem;
+            }
+        }
+
         body {
             padding-top: 3.75rem;
         }
@@ -1584,6 +1604,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             position: absolute;
             right: 0;
         }
+
         #theme-toggle {
             background: none;
             border: none;
