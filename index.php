@@ -1326,8 +1326,18 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             border-bottom-right-radius: 0.5rem;
         }
 
+        /* Add this new rule for light mode */
+        body.light-mode .comment-shadow {
+            background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
+        }
+
         .image-container .comment-container-wrapper.scrollable .comment-shadow {
             opacity: 1;
+        }
+
+        /* Modify this rule to limit opacity in light mode */
+        body.light-mode .image-container .comment-container-wrapper.scrollable .comment-shadow {
+            opacity: 0.5;
         }
 
         .image-container .comment-box {
