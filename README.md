@@ -84,14 +84,23 @@ This Dockerfile installs the necessary libraries and configures the GD extension
 
 ## Installation
 
-1. Clone the repository:
+There are two ways to use ReviewGrid:
+
+1. As a standalone PHP file:
+   - Download the `index.php` file from the [latest release](https://github.com/ktonini/reviewGrid/releases/latest).
+   - Place the `index.php` file in any directory containing images you want to display.
+   - Ensure the web server has write permissions for this directory.
+   - Access the `index.php` file through your web browser.
+
+2. By cloning the repository:
    ```
    git clone https://github.com/ktonini/reviewGrid.git
    ```
-2. Ensure you have PHP installed on your server (PHP 8.0 or higher recommended).
-3. Place the `index.php` file in the directory containing the images you want to display.
-4. Ensure the web server has write permissions for the directory where `index.php` is located.
-5. Access the `index.php` file through your web browser.
+   - Copy the `index.php` file from the cloned repository to your desired image directory.
+
+Regardless of the method you choose:
+- Ensure you have PHP installed on your server (PHP 8.0 or higher recommended).
+- Access the `index.php` file through your web browser.
 
 Note: The script will automatically create a `_data` folder to store thumbnails and user interaction data. This folder and its contents can be safely deleted to reset the gallery state.
 
