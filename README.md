@@ -42,7 +42,7 @@ This screenshot showcases the main interface of ReviewGrid, displaying the image
   - Invalid or non-existent images filtered out
 - **Performance optimizations**:
   - WebP format used for thumbnails
-  - Lazy loading implemented for images
+  - Full-size images loaded only when viewed in modal
 - **Accessibility features**: Aria labels and titles for better screen reader support
 - **Basic security measures**: User input escaping implemented
 - **Custom styling**: 
