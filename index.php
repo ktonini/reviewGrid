@@ -734,7 +734,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
 
         .prev {
             grid-column: 1;
-            grid-row: 2;
+            grid-row: 1 / 4;
             align-self: center;
         }
 
@@ -762,7 +762,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
 
         .next {
             grid-column: 3;
-            grid-row: 2;
+            grid-row: 1 / 4;
             align-self: center;
         }
 
@@ -1410,7 +1410,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             #top-bar,
             #starred-footers-container,
             .modal {
-                z-index: 1;
+                z-index: 3;
             }
 
             #top-bar::before,
@@ -2864,10 +2864,15 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             const commentContainer = modal.querySelector('.comment-container');
             commentContainer.innerHTML = '';
 
+            // Remove any existing loading indicators
+            const existingLoadingIndicators = modal.querySelectorAll('.loading-indicator');
+            existingLoadingIndicators.forEach(indicator => indicator.remove());
+
             // Set loading state
             modalImg.style.opacity = '0';
             const loadingIndicator = document.createElement('div');
             loadingIndicator.textContent = 'Loading...';
+            loadingIndicator.className = 'loading-indicator';
             loadingIndicator.style.position = 'absolute';
             loadingIndicator.style.top = '50%';
             loadingIndicator.style.left = '50%';
