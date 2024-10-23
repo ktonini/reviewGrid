@@ -536,7 +536,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             height: 100%;
             background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 50%);
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
             pointer-events: none;
             z-index: 1;
         }
@@ -550,7 +550,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             height: auto;
             display: block;
             cursor: zoom-in;
-            transition: transform 0.3s ease;
+            transition: transform 0.2s ease;
         }
 
         .image-container:hover img {
@@ -569,7 +569,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             background: transparent;
             color: white;
             opacity: 0;
-            transition: opacity 0.3s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+            transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
         }
 
         .modal-content .star-button {
@@ -619,7 +619,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             justify-content: flex-end;
             align-items: center;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
         }
 
         .image-container:hover .hover-buttons {
@@ -1185,7 +1185,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
 
         #logo-container svg {
             fill: var(--text-color);
-            transition: fill 0.3s ease;
+            transition: fill 0.2s ease;
             width: 2.5rem;
             height: 2.5rem;
         }
@@ -1204,7 +1204,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
 
         #user-name-container {
             position: absolute;
-            right: 2rem;
+            right: 3rem;
             top: 50%;
             transform: translateY(-50%);
             display: flex;
@@ -1212,7 +1212,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             justify-content: flex-end;
             color: #fff;
             cursor: pointer;
-            margin-right: 0.5rem;
         }
 
         .edit-icon {
@@ -1235,7 +1234,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             cursor: pointer;
             transition: background-color 0.2s ease;
             font-size: 0.9rem;
-            margin-right: 0.3125rem;
+            margin-right: 0.5rem;
             text-align: right;
         }
 
@@ -1322,7 +1321,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             background: linear-gradient(to bottom, transparent, rgba(44, 44, 44, 0.9));
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
             border-bottom-left-radius: 0.5rem;
             border-bottom-right-radius: 0.5rem;
         }
@@ -1475,7 +1474,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
                     rgba(0, 0, 0, 0.1) 35%,
                     rgba(0, 0, 0, 0) 40%);
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
             pointer-events: none;
             z-index: 1;
         }
@@ -1586,7 +1585,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             align-items: end;
             gap: 1rem;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
             pointer-events: none;
         }
 
@@ -1602,7 +1601,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
         /* Theme toggle button styles */
         #theme-toggle-container {
             position: absolute;
-            right: 0;
+            right: 0.5rem;
         }
 
         #theme-toggle {
@@ -1610,7 +1609,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             border: none;
             color: var(--text-color);
             cursor: pointer;
-            transition: color 0.3s ease;
+            transition: color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
