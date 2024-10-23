@@ -1404,30 +1404,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             }
         }
 
-        /* Add this new rule */
-        @supports (-webkit-backdrop-filter: none) {
-
-            #top-bar,
-            #starred-footers-container,
-            .modal {
-                z-index: 3;
-            }
-
-            #top-bar::before,
-            #starred-footers-container::before,
-            .modal::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                -webkit-backdrop-filter: blur(1.25rem);
-                backdrop-filter: blur(1.25rem);
-                z-index: -1;
-            }
-        }
-
         /* Update these existing rules */
         #top-bar {
             /* ... existing properties ... */
