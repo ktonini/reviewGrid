@@ -519,7 +519,6 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             background-color: var(--starred-bg);
             box-shadow: 0 0.375rem 0.75rem rgba(0, 0, 0, 0.5);
             transform: scale(1.02);
-            transition: transform 0.2s ease;
         }
 
         .image-wrapper {
