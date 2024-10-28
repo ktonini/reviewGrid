@@ -568,6 +568,10 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             background: transparent;
             color: white;
             opacity: 0;
+        }
+
+        .star-button,
+        .download-button {
             transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
         }
 
@@ -817,6 +821,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             color: var(--footer-text);
             backdrop-filter: blur(1.25rem);
             -webkit-backdrop-filter: blur(1.25rem);
+            z-index: 1000;
         }
 
         .starred-footer {
@@ -939,7 +944,7 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             border-radius: 0.125rem;
             padding: 1rem;
             position: fixed;
-            z-index: 1001;
+            z-index: 2001;
             left: 50%;
             bottom: 1.875rem;
             font-size: 1.0625rem;
@@ -1413,27 +1418,23 @@ function generateStarredFooter($userStarredImages, $baseUrl, $relativeThumbsUrl,
             }
         }
 
-        /* Update these existing rules */
         #top-bar {
-            /* ... existing properties ... */
             background-color: rgba(44, 44, 44, 0.8);
             -webkit-backdrop-filter: blur(1.25rem);
             backdrop-filter: blur(1.25rem);
         }
 
         #starred-footers-container {
-            /* ... existing properties ... */
             background-color: rgba(44, 44, 44, 0.8);
             -webkit-backdrop-filter: blur(1.25rem);
             backdrop-filter: blur(1.25rem);
         }
 
         .modal {
-            /* ... existing properties ... */
             background-color: rgba(44, 44, 44, 0.8);
             -webkit-backdrop-filter: blur(1.25rem);
             backdrop-filter: blur(1.25rem);
-            z-index: 1000;
+            z-index: 2000;
         }
 
         .image-wrapper {

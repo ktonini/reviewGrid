@@ -1,7 +1,12 @@
 # ReviewGrid
 
-ReviewGrid is a lightweight, single-file PHP application designed for quick and easy image gallery creation. It's built to be ephemeral and portable, allowing users to instantly create an interactive gallery from any folder of images.
+ReviewGrid is a self-contained, single-file PHP application designed for quick and easy image gallery creation with built-in collaboration features. It transforms any directory of images into an interactive gallery where users can:
 
+- Comment on images
+- Star/favorite items
+- Share feedback
+- Download individual or multiple images
+- Track changes in real-time
 
 ## Screenshots
 
