@@ -1,5 +1,7 @@
 # ReviewGrid
 
+> **TLDR**: Drop this single PHP file in any folder with images to instantly create an interactive gallery with real-time collaboration features - no database required. Users can comment on and star images, with changes visible to all users instantly without logging in.
+
 ReviewGrid is a self-contained, single-file PHP application designed for quick and easy image gallery creation with built-in collaboration features. It transforms any directory of images into an interactive gallery where users can:
 
 - Comment on images

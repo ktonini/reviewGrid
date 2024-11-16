@@ -1,4 +1,30 @@
 <?php
+/**
+ * ReviewGrid - Interactive Image Gallery with Collaboration Features
+ * 
+ * @package   ReviewGrid
+ * @version   1.0.1
+ * @author    ktonini
+ * @license   GPL-3.0
+ * @link      https://github.com/ktonini/reviewGrid
+ * 
+ * A self-contained, single-file PHP application that transforms any directory 
+ * of images into an interactive gallery. Features include:
+ * - Real-time commenting and starring
+ * - Automatic thumbnail generation
+ * - Light/dark theme support
+ * - IP-based user identification
+ * - No database required
+ * 
+ * Requirements:
+ * - PHP 8.0+
+ * - GD extension with JPEG, PNG, and WebP support
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
 // error_reporting(E_ALL);
 // ini_set('display_errors', 1);
 
